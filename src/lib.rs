@@ -29,3 +29,12 @@ static EXAMPLE_TREE: BinaryTree<'static, i32, i32> = BinaryTree::Branch {
         value: 5
     }
 };
+
+impl <'a, V> AvlTree<'a, V> {
+    fn insert(&mut self) {
+        match self {
+           BinaryTree::Leaf {value, metadata: _} => (),
+           BinaryTree::Branch {metadata: branching_factor, value, left, right} => ()
+        }
+    }
+}

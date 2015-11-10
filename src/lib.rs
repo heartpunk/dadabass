@@ -1,13 +1,25 @@
 #[test]
 fn it_works() {
+    let example_tree: BinaryTree<i32, i32> = BinaryTree::Branch {
+        metadata: 0,
+        value: 4,
+        left: Box::new(BinaryTree::Leaf {
+            metadata: 0,
+            value: 3
+        }),
+        right: Box::new(BinaryTree::Leaf {
+            metadata: 0,
+            value: 5
+        })
+    };
 }
 
-enum BinaryTree<'a, V: 'a, M: 'a> {
+enum BinaryTree<V, M> {
     Branch {
         metadata: M,
         value: V,
-        left: &'a BinaryTree<'a, V, M>,
-        right: &'a BinaryTree<'a, V, M>
+        left: Box<BinaryTree<V, M>>,
+        right: Box<BinaryTree<V, M>>
     },
     Leaf {
         value: V,
@@ -15,26 +27,14 @@ enum BinaryTree<'a, V: 'a, M: 'a> {
     }
 }
 
-type AvlTree<'a, V: 'a> = BinaryTree<'a, V, i32>;
+type AvlTree<'a, V: 'a> = BinaryTree<V, i32>;
 
-static EXAMPLE_TREE: BinaryTree<'static, i32, i32> = BinaryTree::Branch {
-    metadata: 0,
-    value: 4,
-    left: &BinaryTree::Leaf {
-        metadata: 0,
-        value: 3
-    },
-    right: &BinaryTree::Leaf {
-        metadata: 0,
-        value: 5
-    }
-};
 
 impl <'a, V> AvlTree<'a, V> {
     fn insert(&mut self) {
         match self {
-           BinaryTree::Leaf {value, metadata: _} => (),
-           BinaryTree::Branch {metadata: branching_factor, value, left, right} => ()
+           &mut BinaryTree::Leaf {value, metadata: _} => (),
+           &mut BinaryTree::Branch {metadata: branching_factor, value, left, right} => ()
         }
     }
 }

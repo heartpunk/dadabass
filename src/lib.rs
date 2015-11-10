@@ -33,8 +33,8 @@ type AvlTree<'a, V: 'a> = BinaryTree<V, i32>;
 impl <'a, V> AvlTree<'a, V> {
     fn insert(&mut self) {
         match self {
-           &mut BinaryTree::Leaf {value, metadata: _} => (),
-           &mut BinaryTree::Branch {metadata: branching_factor, value, left, right} => ()
+           &mut BinaryTree::Leaf {ref mut value, metadata: _} => (),
+           &mut BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, ref mut right} => ()
         }
     }
 }

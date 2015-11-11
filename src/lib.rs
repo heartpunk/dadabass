@@ -1,4 +1,12 @@
 #![feature(box_syntax, box_patterns)]
+#![feature(rand)]
+#![feature(plugin)]
+#![plugin(quickcheck_macros)]
+extern crate quickcheck;
+extern crate rand;
+
+use quickcheck::Arbitrary;
+use quickcheck::Gen;
 
 #[test]
 fn it_works() {
@@ -27,9 +35,15 @@ fn it_works() {
     println!("{:?}", example_tree);
     example_tree.insert(42);
     println!("{:?}", example_tree);
+    assert_eq!(8, example_tree.iter().count())
 }
 
-#[derive(Debug)]
+#[quickcheck]
+fn ordering_property(bt: BinaryTree<i32, i32>) -> bool {
+    true
+}
+
+#[derive(Clone,Debug)]
 enum BinaryTree<V: Ord+Copy, M> {
     Branch {
         metadata: M,
@@ -40,6 +54,42 @@ enum BinaryTree<V: Ord+Copy, M> {
     Leaf {
         value: V,
         metadata: M
+    }
+}
+
+impl Arbitrary for BinaryTree<i32, i32> {
+    fn arbitrary<G: Gen>(g: &mut G) -> Self {
+        let base_val: i32 = g.gen();
+        let tree = BinaryTree::Leaf {metadata: 0, value: base_val};
+        tree
+    }
+}
+
+impl <'a, V: Ord+Copy+Clone+Send, M: Copy+Clone+Send> BinaryTree<V, M> {
+    fn iter(&'a self) -> BinaryTreeIterator<'a, V, M> {
+        BinaryTreeIterator {to_visit: vec![&self]}
+    }
+}
+
+struct BinaryTreeIterator<'a, V: 'a+Ord+Copy+Clone+Send, M: 'a+Copy+Clone+Send> {
+    to_visit: Vec<&'a BinaryTree<V, M>>
+}
+
+impl <'a, V: 'a+Ord+Copy+Clone+Send, M: 'a+Copy+Clone+Send> Iterator for BinaryTreeIterator<'a, V, M> {
+    type Item = &'a BinaryTree<V, M>;
+
+    fn next(&mut self) -> Option<&'a BinaryTree<V, M>> {
+        let ret = self.to_visit.pop();
+        match ret {
+            Some(&BinaryTree::Branch {metadata: _, value: _, left: Some(ref left), right: None}) => {self.to_visit.push(left)},
+            Some(&BinaryTree::Branch {metadata: _, value: _, left: None, right: Some(ref right)}) => {self.to_visit.push(right)},
+            Some(&BinaryTree::Branch {metadata: _, value: _, left: Some(ref left), right: Some(ref right)}) => {
+                self.to_visit.push(left);
+                self.to_visit.push(right)
+            },
+            _ => ()
+        }
+        ret
     }
 }
 

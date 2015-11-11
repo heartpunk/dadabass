@@ -61,21 +61,29 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                         right: None
                     }
                 } else {
-                    unreachable!("wrong side of else")
+                    *self = BinaryTree::Branch {
+                        metadata: 1,
+                        value: new_value, // this should be reconsidered
+                        left: None,
+                        right: Some(Box::new(BinaryTree::Leaf {
+                            metadata: 0,
+                            value: value // other thing that should be reconsidered
+                        }))
+                    }
                 }
                 ()
             },
-            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, ref mut right} if new_value < *value => {
-                match left {
-                    &mut Some(ref mut inner_left) => inner_left.insert(new_value),
-                    &mut None => ()
-                }
+            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: Some(ref mut left ), right: _} if new_value > *value => {
+                left.insert(new_value)
+            }
+            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, right: _} if new_value > *value => {
+                *left = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: 0}))
             },
-            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, ref mut right} if *value > new_value => {
-                match right {
-                    &mut Some(ref mut inner_right) => inner_right.insert(new_value),
-                    &mut None => ()
-                }
+            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: _, right: Some(ref mut right)} if new_value < *value => {
+                right.insert(new_value)
+            }
+            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: _, right: ref mut right} if new_value < *value => {
+                *right = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: 0}))
             },
             BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, ref mut right} if *value == new_value => {
                 () // this is a duplicate value, do nothing.

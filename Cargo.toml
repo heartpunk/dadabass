@@ -3,6 +3,6 @@ name = "dadabass"
 version = "0.1.0"
 authors = ["Ezekiel Smithburg <tehgeekmeister@gmail.com>"]
 
-[dev-dependencies]
+[dependencies]
 quickcheck = "0.2.24"
 quickcheck_macros = "0.2.24"

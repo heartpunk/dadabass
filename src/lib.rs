@@ -5,6 +5,10 @@
 extern crate quickcheck;
 extern crate rand;
 
+use std::iter::Map;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::Result;
 use quickcheck::Arbitrary;
 use quickcheck::Gen;
 
@@ -40,10 +44,21 @@ fn it_works() {
 
 #[quickcheck]
 fn ordering_property(bt: BinaryTree<i32, i32>) -> bool {
-    true
+    match bt {
+        BinaryTree::Branch {metadata: _, value, left: Some(ref left), right: Some(ref right)} => {
+            return left.iter().all(|t| value > t.value()) && right.iter().all(|t| value < t.value())
+        },
+        BinaryTree::Branch {metadata: _, value, left: None, right: Some(ref right)} => {
+            return right.iter().all(|t| value < t.value())
+        },
+        BinaryTree::Branch {metadata: _, value, left: Some(ref left), right: None} => {
+            return left.iter().all(|t| value > t.value())
+        },
+        _ => true
+    }
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone)]
 enum BinaryTree<V: Ord+Copy, M> {
     Branch {
         metadata: M,
@@ -57,10 +72,37 @@ enum BinaryTree<V: Ord+Copy, M> {
     }
 }
 
+impl <V: Debug+Copy+Ord, M> Debug for BinaryTree<V, M> {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        match self {
+            &BinaryTree::Branch {metadata: _, value, left: Some(ref left), right: Some(ref right)} => {
+                write!(f, "{:?},", left);
+                write!(f, "{:?},", value);
+                write!(f, "{:?}", right)
+            },
+            &BinaryTree::Branch {metadata: _, value, left: None, right: Some(ref right)} => {
+                write!(f, "{:?},", value);
+                write!(f, "{:?}", right)
+            },
+            &BinaryTree::Branch {metadata: _, value, left: Some(ref left), right: None} => {
+                write!(f, "{:?},", left);
+                write!(f, "{:?}", value)
+            },
+            &BinaryTree::Branch {metadata: _, value, left: None, right: None} => {
+                write!(f, "{:?}", value)
+            },
+            &BinaryTree::Leaf {metadata: _, value} => { write!{f, "{:?}", value} }
+        }
+    }
+}
+
 impl Arbitrary for BinaryTree<i32, i32> {
     fn arbitrary<G: Gen>(g: &mut G) -> Self {
-        let base_val: i32 = g.gen();
-        let tree = BinaryTree::Leaf {metadata: 0, value: base_val};
+        let base_val: i32 = g.gen_range(-100, 100);
+        let mut tree = BinaryTree::Leaf {metadata: 0, value: base_val};
+        while g.gen() {
+            tree.insert(g.gen());
+        }
         tree
     }
 }
@@ -68,6 +110,13 @@ impl Arbitrary for BinaryTree<i32, i32> {
 impl <'a, V: Ord+Copy+Clone+Send, M: Copy+Clone+Send> BinaryTree<V, M> {
     fn iter(&'a self) -> BinaryTreeIterator<'a, V, M> {
         BinaryTreeIterator {to_visit: vec![&self]}
+    }
+
+    fn value(&'a self) -> V {
+        match self {
+            &BinaryTree::Branch {metadata: _, left: _, right: _, value: v} => v,
+            &BinaryTree::Leaf {metadata: _, value: v} => v
+        }
     }
 }
 
@@ -104,35 +153,37 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                     *self = BinaryTree::Branch {
                         metadata: 1,
                         value: value, // this should be reconsidered
-                        left: Some(Box::new(BinaryTree::Leaf {
+                        right: Some(Box::new(BinaryTree::Leaf {
                             metadata: 0,
                             value: new_value // other thing that should be reconsidered
                         })),
-                        right: None
+                        left: None
                     }
+                } else if new_value == value {
+                    // we don't allow duplicates.
                 } else {
                     *self = BinaryTree::Branch {
                         metadata: 1,
-                        value: new_value, // this should be reconsidered
-                        left: None,
-                        right: Some(Box::new(BinaryTree::Leaf {
+                        value: value, // this should be reconsidered
+                        right: None,
+                        left: Some(Box::new(BinaryTree::Leaf {
                             metadata: 0,
-                            value: value // other thing that should be reconsidered
+                            value: new_value // other thing that should be reconsidered
                         }))
                     }
                 }
                 ()
             },
-            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: Some(ref mut left ), right: _} if new_value > *value => {
+            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: Some(ref mut left ), right: _} if new_value < *value => {
                 left.insert(new_value)
             }
-            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, right: _} if new_value > *value => {
+            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, right: _} if new_value < *value => {
                 *left = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: 0}))
             },
-            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: _, right: Some(ref mut right)} if new_value < *value => {
+            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: _, right: Some(ref mut right)} if new_value > *value => {
                 right.insert(new_value)
             }
-            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: _, right: ref mut right} if new_value < *value => {
+            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: _, right: ref mut right} if new_value > *value => {
                 *right = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: 0}))
             },
             BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, ref mut right} if *value == new_value => {

@@ -193,7 +193,7 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                         left: None
                     }
                 } else if new_value == value {
-                    // we don't allow duplicates.
+                   return 0 // we don't allow duplicates.
                 } else {
                     *self = BinaryTree::Branch {
                         metadata: (1, 0),

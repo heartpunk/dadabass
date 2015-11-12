@@ -14,15 +14,15 @@ use quickcheck::Gen;
 
 #[test]
 fn it_works() {
-    let mut example_tree: BinaryTree<i32, i32> = BinaryTree::Branch {
-        metadata: 0,
+    let mut example_tree: BinaryTree<i32, (i8, i8)> = BinaryTree::Branch {
+        metadata: (1, 1),
         value: 4,
         left: Some(Box::new(BinaryTree::Leaf {
-            metadata: 0,
+            metadata: (0, 0),
             value: 3
         })),
         right: Some(Box::new(BinaryTree::Leaf {
-            metadata: 0,
+            metadata: (0, 0),
             value: 5
         }))
     };
@@ -43,7 +43,7 @@ fn it_works() {
 }
 
 #[quickcheck]
-fn ordering_property(bt: BinaryTree<i32, i32>) -> bool {
+fn ordering_property(bt: BinaryTree<i32, (i8, i8)>) -> bool {
     match bt {
         BinaryTree::Branch {metadata: _, value, left: Some(ref left), right: Some(ref right)} => {
             return left.iter().all(|t| value > t.value()) && right.iter().all(|t| value < t.value())
@@ -87,9 +87,9 @@ impl <V: Debug+Copy+Ord, M> Debug for BinaryTree<V, M> {
     }
 }
 
-impl Arbitrary for BinaryTree<i32, i32> {
+impl Arbitrary for BinaryTree<i32, (i8, i8)> {
     fn arbitrary<G: Gen>(g: &mut G) -> Self {
-        let mut tree = BinaryTree::Leaf {metadata: 0, value: g.gen_range(-1000,1000)};
+        let mut tree = BinaryTree::Leaf {metadata: (0, 0), value: g.gen_range(-1000,1000)};
         while g.gen() {
             tree.insert(g.gen_range(-1000,1000));
         }
@@ -132,7 +132,7 @@ impl <'a, V: 'a+Ord+Copy+Clone+Send, M: 'a+Copy+Clone+Send> Iterator for BinaryT
     }
 }
 
-type AvlTree<'a, V: 'a> = BinaryTree<V, i32>;
+type AvlTree<'a, V: 'a> = BinaryTree<V, (i8, i8)>;
 
 
 impl <'a, V: Ord+Copy> AvlTree<'a, V> {
@@ -141,10 +141,10 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
             BinaryTree::Leaf {value, metadata: _} => {
                 if new_value > value {
                     *self = BinaryTree::Branch {
-                        metadata: 1,
+                        metadata: (0, 1),
                         value: value, // this should be reconsidered
                         right: Some(Box::new(BinaryTree::Leaf {
-                            metadata: 0,
+                            metadata: (0, 0),
                             value: new_value // other thing that should be reconsidered
                         })),
                         left: None
@@ -153,11 +153,11 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                     // we don't allow duplicates.
                 } else {
                     *self = BinaryTree::Branch {
-                        metadata: 1,
+                        metadata: (1, 0),
                         value: value, // this should be reconsidered
                         right: None,
                         left: Some(Box::new(BinaryTree::Leaf {
-                            metadata: 0,
+                            metadata: (0, 0),
                             value: new_value // other thing that should be reconsidered
                         }))
                     }
@@ -168,13 +168,13 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                 left.insert(new_value)
             }
             BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, right: _} if new_value < *value => {
-                *left = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: 0}))
+                *left = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: (0, 0)}))
             },
             BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: _, right: Some(ref mut right)} if new_value > *value => {
                 right.insert(new_value)
             }
             BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: _, right: ref mut right} if new_value > *value => {
-                *right = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: 0}))
+                *right = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: (0, 0)}))
             },
             BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, ref mut right} if *value == new_value => {
                 () // this is a duplicate value, do nothing.

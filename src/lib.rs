@@ -98,10 +98,9 @@ impl <V: Debug+Copy+Ord, M> Debug for BinaryTree<V, M> {
 
 impl Arbitrary for BinaryTree<i32, i32> {
     fn arbitrary<G: Gen>(g: &mut G) -> Self {
-        let base_val: i32 = g.gen_range(-100, 100);
-        let mut tree = BinaryTree::Leaf {metadata: 0, value: base_val};
+        let mut tree = BinaryTree::Leaf {metadata: 0, value: g.gen_range(-1000,1000)};
         while g.gen() {
-            tree.insert(g.gen());
+            tree.insert(g.gen_range(-1000,1000));
         }
         tree
     }

@@ -75,21 +75,12 @@ enum BinaryTree<V: Ord+Copy, M> {
 impl <V: Debug+Copy+Ord, M> Debug for BinaryTree<V, M> {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
-            &BinaryTree::Branch {metadata: _, value, left: Some(ref left), right: Some(ref right)} => {
-                write!(f, "{:?},", left);
-                write!(f, "{:?},", value);
-                write!(f, "{:?}", right)
-            },
-            &BinaryTree::Branch {metadata: _, value, left: None, right: Some(ref right)} => {
-                write!(f, "{:?},", value);
-                write!(f, "{:?}", right)
-            },
-            &BinaryTree::Branch {metadata: _, value, left: Some(ref left), right: None} => {
-                write!(f, "{:?},", left);
-                write!(f, "{:?}", value)
-            },
-            &BinaryTree::Branch {metadata: _, value, left: None, right: None} => {
-                write!(f, "{:?}", value)
+            &BinaryTree::Branch {metadata: _, value, left: ref left, right: ref right} => {
+                let mut ret = Ok(());
+                left.as_ref().map(|v| ret = write!(f, "{:?},", v));
+                ret = write!(f, "{:?}", value);
+                right.as_ref().map(|v| ret = write!(f, ",{:?}", v));
+                ret
             },
             &BinaryTree::Leaf {metadata: _, value} => { write!{f, "{:?}", value} }
         }

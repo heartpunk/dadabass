@@ -178,7 +178,8 @@ type AvlTree<'a, V: 'a> = BinaryTree<V, (i8, i8)>;
 
 
 impl <'a, V: Ord+Copy> AvlTree<'a, V> {
-    fn insert(&mut self, new_value: V) {
+    #[allow(non_shorthand_field_patterns)]
+    fn insert(&mut self, new_value: V) -> i8 {
         match *self {
             BinaryTree::Leaf {value, metadata: _} => {
                 if new_value > value {
@@ -204,25 +205,37 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                         }))
                     }
                 }
-                ()
-            },
-            BinaryTree::Branch {metadata: (ref mut left_height, _), ref mut value, left: Some(ref mut left ), right: _} if new_value < *value => {
+                1
+            }
+            BinaryTree::Branch {metadata: (ref mut left_height, right_height), ref mut value, left: Some(ref mut left ), right: _} if new_value < *value => {
+                let incr = left.insert(new_value);
+                *left_height += incr;
+                assert!(incr < 2);
+                incr
+            }
+            BinaryTree::Branch {metadata: (ref mut left_height, right_height), ref mut value, ref mut left, right: ref right} if new_value < *value => {
+                assert_eq!(0, *left_height);
+
+                *left = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: (0, 0)}));
                 *left_height += 1;
-                left.insert(new_value)
+                if *left_height > right_height { 1 } else { 0 }
             }
-            BinaryTree::Branch {metadata: _, ref mut value, ref mut left, right: _} if new_value < *value => {
-                *left = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: (0, 0)}))
-            },
-            BinaryTree::Branch {metadata: (_, ref mut right_height), ref mut value, left: _, right: Some(ref mut right)} if new_value > *value => {
+            BinaryTree::Branch {metadata: (left_height, ref mut right_height), ref mut value, left: _, right: Some(ref mut right)} if new_value > *value => {
+                let incr = right.insert(new_value);
+                *right_height += incr;
+                assert!(incr < 2);
+                incr
+            }
+            BinaryTree::Branch {metadata: (left_height, ref mut right_height), ref mut value, left: ref left, right: ref mut right} if new_value > *value => {
+                assert_eq!(0, *right_height);
+
+                *right = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: (0, 0)}));
                 *right_height += 1;
-                right.insert(new_value)
+                if *right_height > left_height { 1 } else { 0 }
             }
-            BinaryTree::Branch {metadata: _, ref mut value, left: _, right: ref mut right} if new_value > *value => {
-                *right = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: (0, 0)}))
-            },
             BinaryTree::Branch {metadata: _, ref mut value, left: _, right: _} if *value == new_value => {
-                () // this is a duplicate value, do nothing.
-            },
+                0 // this is a duplicate value, do nothing.
+            }
             BinaryTree::Branch {metadata: _, value: _, left: _, right: _} => unreachable!()
         }
     }

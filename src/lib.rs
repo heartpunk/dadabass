@@ -58,6 +58,62 @@ fn ordering_property(bt: BinaryTree<i32, (i8, i8)>) -> bool {
     }
 }
 
+#[quickcheck]
+fn height_is_maintained(bt: AvlTree<i32>) -> bool {
+    match bt {
+        BinaryTree::Branch {
+            metadata: (ref left_height, ref right_height), value,
+            left: Some(box BinaryTree::Branch {metadata: (ref left_left_height, ref left_right_height), value: _, left: _, right: _}),
+            right: Some(box BinaryTree::Branch {metadata: (ref right_left_height, ref right_right_height), value: _, left: _, right: _})}
+        |
+        BinaryTree::Branch {
+            metadata: (ref left_height, ref right_height), value,
+            left: Some(box BinaryTree::Branch {metadata: (ref left_left_height, ref left_right_height), value: _, left: _, right: _}),
+            right: Some(box BinaryTree::Leaf {metadata: (ref right_left_height, ref right_right_height), value: _})}
+        |
+        BinaryTree::Branch {
+            metadata: (ref left_height, ref right_height), value,
+            left: Some(box BinaryTree::Leaf {metadata: (ref left_left_height, ref left_right_height), value: _}),
+            right: Some(box BinaryTree::Branch {metadata: (ref right_left_height, ref right_right_height), value: _, left: _, right: _})}
+        |
+        BinaryTree::Branch {
+            metadata: (ref left_height, ref right_height), value,
+            left: Some(box BinaryTree::Leaf {metadata: (ref left_left_height, ref left_right_height), value: _}),
+            right: Some(box BinaryTree::Leaf {metadata: (ref right_left_height, ref right_right_height), value: _})}
+        => {
+            *left_height == std::cmp::max(*left_left_height, *left_right_height) + 1 && *right_height == std::cmp::max(*right_left_height, *right_right_height) + 1
+        },
+        BinaryTree::Branch {
+            metadata: (ref left_height, ref right_height), value,
+            right: Some(box BinaryTree::Branch {metadata: (ref right_left_height, ref right_right_height), value: _, left: _, right: _}),
+            left: None}
+        |
+        BinaryTree::Branch {
+            metadata: (ref left_height, ref right_height), value,
+            right: Some(box BinaryTree::Leaf {metadata: (ref right_left_height, ref right_right_height), value: _}),
+            left: None}
+        => {
+            *right_height == std::cmp::max(*right_left_height, *right_right_height) + 1
+        },
+        BinaryTree::Branch {
+            metadata: (ref left_height, ref right_height), value,
+            left: Some(box BinaryTree::Branch {metadata: (ref left_left_height, ref left_right_height), value: _, left: _, right: _}),
+            right: None}
+        |
+        BinaryTree::Branch {
+            metadata: (ref left_height, ref right_height), value,
+            left: Some(box BinaryTree::Leaf {metadata: (ref left_left_height, ref left_right_height), value: _}),
+            right: None}
+        => {
+            *left_height == std::cmp::max(*left_left_height, *left_right_height) + 1
+        },
+        BinaryTree::Branch {metadata: (ref left_height, ref right_height), value: _, left: None, right: None} |
+        BinaryTree::Leaf {metadata: (ref left_height, ref right_height), value: _} => {
+            *left_height == 0 && *right_height == 0
+        }
+    }
+}
+
 #[derive(Clone)]
 enum BinaryTree<V: Ord+Copy, M> {
     Branch {
@@ -164,22 +220,24 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                 }
                 ()
             },
-            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: Some(ref mut left ), right: _} if new_value < *value => {
+            BinaryTree::Branch {metadata: (ref mut left_height, _), ref mut value, left: Some(ref mut left ), right: _} if new_value < *value => {
+                *left_height += 1;
                 left.insert(new_value)
             }
-            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, right: _} if new_value < *value => {
+            BinaryTree::Branch {metadata: _, ref mut value, ref mut left, right: _} if new_value < *value => {
                 *left = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: (0, 0)}))
             },
-            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: _, right: Some(ref mut right)} if new_value > *value => {
+            BinaryTree::Branch {metadata: (_, ref mut right_height), ref mut value, left: _, right: Some(ref mut right)} if new_value > *value => {
+                *right_height += 1;
                 right.insert(new_value)
             }
-            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, left: _, right: ref mut right} if new_value > *value => {
+            BinaryTree::Branch {metadata: _, ref mut value, left: _, right: ref mut right} if new_value > *value => {
                 *right = Some(Box::new(BinaryTree::Leaf {value: new_value, metadata: (0, 0)}))
             },
-            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, ref mut right} if *value == new_value => {
+            BinaryTree::Branch {metadata: _, ref mut value, left: _, right: _} if *value == new_value => {
                 () // this is a duplicate value, do nothing.
             },
-            BinaryTree::Branch {metadata: ref mut branching_factor, ref mut value, ref mut left, ref mut right} => unreachable!()
+            BinaryTree::Branch {metadata: _, value: _, left: _, right: _} => unreachable!()
         }
     }
 }

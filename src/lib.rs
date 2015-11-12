@@ -114,7 +114,7 @@ fn height_is_maintained(bt: AvlTree<i32>) -> bool {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug,Clone)]
 enum BinaryTree<V: Ord+Copy, M> {
     Branch {
         metadata: M,
@@ -128,20 +128,6 @@ enum BinaryTree<V: Ord+Copy, M> {
     }
 }
 
-impl <V: Debug+Copy+Ord, M> Debug for BinaryTree<V, M> {
-    fn fmt(&self, f: &mut Formatter) -> Result {
-        match self {
-            &BinaryTree::Branch {metadata: _, value, left: ref left, right: ref right} => {
-                let mut ret = Ok(());
-                left.as_ref().map(|v| ret = write!(f, "{:?},", v));
-                ret = write!(f, "{:?}", value);
-                right.as_ref().map(|v| ret = write!(f, ",{:?}", v));
-                ret
-            },
-            &BinaryTree::Leaf {metadata: _, value} => { write!{f, "{:?}", value} }
-        }
-    }
-}
 
 impl Arbitrary for BinaryTree<i32, (i8, i8)> {
     fn arbitrary<G: Gen>(g: &mut G) -> Self {

@@ -93,7 +93,7 @@ fn height_is_maintained(bt: AvlTree<i32>) -> bool {
             right: Some(box BinaryTree::Leaf {metadata: (ref right_left_height, ref right_right_height), value: _}),
             left: None}
         => {
-            *right_height == std::cmp::max(*right_left_height, *right_right_height) + 1
+            *right_height == std::cmp::max(*right_left_height, *right_right_height) + 1 && *left_height == 0
         },
         BinaryTree::Branch {
             metadata: (ref left_height, ref right_height), value,
@@ -105,7 +105,7 @@ fn height_is_maintained(bt: AvlTree<i32>) -> bool {
             left: Some(box BinaryTree::Leaf {metadata: (ref left_left_height, ref left_right_height), value: _}),
             right: None}
         => {
-            *left_height == std::cmp::max(*left_left_height, *left_right_height) + 1
+            *left_height == std::cmp::max(*left_left_height, *left_right_height) + 1 && *right_height == 0
         },
         BinaryTree::Branch {metadata: (ref left_height, ref right_height), value: _, left: None, right: None} |
         BinaryTree::Leaf {metadata: (ref left_height, ref right_height), value: _} => {

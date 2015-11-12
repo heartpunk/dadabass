@@ -198,11 +198,11 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                     *self = BinaryTree::Branch {
                         metadata: (1, 0),
                         value: value, // this should be reconsidered
-                        right: None,
                         left: Some(Box::new(BinaryTree::Leaf {
                             metadata: (0, 0),
                             value: new_value // other thing that should be reconsidered
-                        }))
+                        })),
+                        right: None
                     }
                 }
                 1

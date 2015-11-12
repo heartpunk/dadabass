@@ -185,10 +185,10 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                 if new_value > value {
                     *self = BinaryTree::Branch {
                         metadata: (0, 1),
-                        value: value, // this should be reconsidered
+                        value: value,
                         right: Some(Box::new(BinaryTree::Leaf {
                             metadata: (0, 0),
-                            value: new_value // other thing that should be reconsidered
+                            value: new_value
                         })),
                         left: None
                     }
@@ -197,10 +197,10 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                 } else {
                     *self = BinaryTree::Branch {
                         metadata: (1, 0),
-                        value: value, // this should be reconsidered
+                        value: value,
                         left: Some(Box::new(BinaryTree::Leaf {
                             metadata: (0, 0),
-                            value: new_value // other thing that should be reconsidered
+                            value: new_value
                         })),
                         right: None
                     }

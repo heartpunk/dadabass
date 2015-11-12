@@ -211,7 +211,7 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                 let incr = left.insert(new_value);
                 *left_height += incr;
                 assert!(incr < 2);
-                incr
+                if *left_height > right_height { incr } else { 0 }
             }
             BinaryTree::Branch {metadata: (ref mut left_height, right_height), ref mut value, ref mut left, right: ref right} if new_value < *value => {
                 assert_eq!(0, *left_height);
@@ -224,7 +224,7 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                 let incr = right.insert(new_value);
                 *right_height += incr;
                 assert!(incr < 2);
-                incr
+                if *right_height > left_height { incr } else { 0 }
             }
             BinaryTree::Branch {metadata: (left_height, ref mut right_height), ref mut value, left: ref left, right: ref mut right} if new_value > *value => {
                 assert_eq!(0, *right_height);

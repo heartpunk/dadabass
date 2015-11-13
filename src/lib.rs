@@ -119,7 +119,7 @@ fn balance_property(bt: BinaryTree<i32, (i8, i8)>) -> bool {
     match bt {
         BinaryTree::Branch {metadata, value: _, left: _, right: _}
         |
-        BinaryTree::Leaf {metadata, value: _} => ( metadata.0 - metadata.1 ) <= 1 && ( metadata.0 - metadata.1 ) <= 1
+        BinaryTree::Leaf {metadata, value: _} => ( metadata.0 - metadata.1 ) <= 1 && ( metadata.0 - metadata.1 ) >= -1
     }
 }
 

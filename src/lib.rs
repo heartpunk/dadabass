@@ -152,7 +152,7 @@ type AvlTree<'a, V: 'a> = BinaryTree<V, (i8, i8)>;
 impl <'a, V: Ord+Copy> AvlTree<'a, V> {
     #[allow(non_shorthand_field_patterns)]
     fn insert(&mut self, new_value: V) -> i8 {
-        match *self {
+        let ret = match *self {
             BinaryTree {value, metadata: _, left: None, right: None} => {
                 if new_value > value {
                     *self = BinaryTree {
@@ -213,6 +213,66 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
                 0 // this is a duplicate value, do nothing.
             }
             BinaryTree {metadata: _, value: _, left: _, right: _} => unreachable!()
+        };
+        self.balance();
+        self.fix_metadata();
+        ret
+    }
+
+    fn fix_metadata(&mut self) {
+        match self {
+            &mut BinaryTree {metadata: (left, right), value: _,
+                        left: Some(box BinaryTree {metadata: (left_left, left_right), value: _, left: _, right: _}),
+                        right: Some(box BinaryTree {metadata: (right_left, right_right), value: _, left: _, right: _})}
+            => {
+                self.metadata = (std::cmp::max(left_left, left_right) + 1, std::cmp::max(right_left, right_right) + 1);
+                println!("{:?} {:?}", self.metadata, (left, right));
+            }
+            &mut BinaryTree {metadata: (left, right), value: _,
+                        left: None,
+                        right: Some(box BinaryTree {metadata: (right_left, right_right), value: _, left: _, right: _})}
+            => {
+                self.metadata = (0, std::cmp::max(right_left, right_right) + 1);
+                println!("{:?} {:?}", self.metadata, (left, right));
+            }
+            &mut BinaryTree {metadata: (left, right), value: _,
+                        left: Some(box BinaryTree {metadata: (left_left, left_right), value: _, left: _, right: _}),
+                        right: None}
+            => {
+                self.metadata = (std::cmp::max(left_left, left_right) + 1, 0);
+                println!("{:?} {:?}", self.metadata, (left, right));
+            }
+            &mut BinaryTree {metadata: (left, right), value: _,
+                        left: None,
+                        right: None}
+            => {
+                self.metadata = (0, 0);
+                println!("{:?} {:?}", self.metadata, (left, right));
+            }
+        }
+    }
+
+    fn balance(&mut self) {
+        let difference: i8 = self.metadata.0 - self.metadata.1;
+
+        if difference == 2  {
+            let mut tmp = self.clone();
+            let left = self.left.clone().expect("trying to rotate left subtree up");
+            *self = *left;
+            tmp.left = self.right.clone();
+            tmp.fix_metadata();
+            self.fix_metadata();
+            self.right = Some(box tmp);
+        } else if difference == -2 {
+            let mut tmp = self.clone();
+            let right = self.right.clone().expect("trying to rotate right subtree up");
+            *self = *right;
+            tmp.right = self.left.clone();
+            tmp.fix_metadata();
+            self.fix_metadata();
+            self.left = Some(box tmp);
+        } else if difference < -2 && difference > 2 {
+            unreachable!()
         }
     }
 }

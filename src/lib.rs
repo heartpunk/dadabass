@@ -5,6 +5,7 @@
 extern crate quickcheck;
 extern crate rand;
 
+use std::mem;
 use quickcheck::Arbitrary;
 use quickcheck::Gen;
 
@@ -111,9 +112,9 @@ impl <'a, V: 'a+Ord+Copy+Clone+Send, M: 'a+Copy+Clone+Send> Iterator for BinaryT
 
 type AvlTree<'a, V: 'a> = BinaryTree<V, (i8, i8)>;
 
-impl <'a, V: Ord+Copy> AvlTree<'a, V> {
+impl <'a> AvlTree<'a, i32> {
     #[allow(non_shorthand_field_patterns)]
-    fn insert(&mut self, new_value: V) -> i8 {
+    fn insert(&mut self, new_value: i32) -> i8 {
         let ret = match *self {
             BinaryTree {value, metadata: _, left: None, right: None} => {
                 if new_value > value {
@@ -215,23 +216,25 @@ impl <'a, V: Ord+Copy> AvlTree<'a, V> {
     }
 
     fn rotate_left(&mut self) {
-        let mut tmp = self.clone();
-        let mut right = self.right.clone().expect("trying to rotate right subtree up");
-        tmp.right = right.left.clone();
-        tmp.fix_metadata();
-        right.left = Some(box tmp);
-        *self = *right;
+        let mut right: &mut Option<Box<AvlTree<i32>>> = &mut Some(Box::new(BinaryTree {metadata: (0,0), value: 0, right: None, left: None}));
+        mem::swap(right, &mut self.right);
+        mem::swap(&mut self.right, &mut right.as_mut().unwrap().left);
+        mem::swap(&mut **right.as_mut().unwrap().left.as_mut().unwrap(), self);
         self.fix_metadata();
+        right.as_mut().unwrap().left.as_mut().unwrap().fix_metadata();
+        right.as_mut().unwrap().fix_metadata();
+        mem::swap(self, right.as_mut().unwrap());
     }
 
     fn rotate_right(&mut self) {
-        let mut tmp = self.clone();
-        let mut left = self.left.clone().expect("trying to rotate left subtree up");
-        tmp.left = left.right.clone();
-        tmp.fix_metadata();
-        left.right = Some(box tmp);
-        *self = *left;
+        let mut left: &mut Option<Box<AvlTree<i32>>> = &mut Some(Box::new(BinaryTree {metadata: (0,0), value: 0, left: None, right: None}));
+        mem::swap(left, &mut self.left);
+        mem::swap(&mut self.left, &mut left.as_mut().unwrap().right);
+        mem::swap(&mut **left.as_mut().unwrap().right.as_mut().unwrap(), self);
         self.fix_metadata();
+        left.as_mut().unwrap().right.as_mut().unwrap().fix_metadata();
+        left.as_mut().unwrap().fix_metadata();
+        mem::swap(self, left.as_mut().unwrap());
     }
 
     fn balance(&mut self) {

@@ -29,21 +29,21 @@ fn ordering_property(bt: BinaryTree<i32, (i8, i8)>) -> bool {
 fn height_is_maintained(bt: AvlTree<i32>) -> bool {
     match bt {
         BinaryTree {
-            metadata: (ref left_height, ref right_height), value,
+            metadata: (ref left_height, ref right_height), value: _,
             left: Some(box BinaryTree {metadata: (ref left_left_height, ref left_right_height), value: _, left: _, right: _}),
             right: Some(box BinaryTree {metadata: (ref right_left_height, ref right_right_height), value: _, left: _, right: _})}
         => {
             *left_height == std::cmp::max(*left_left_height, *left_right_height) + 1 && *right_height == std::cmp::max(*right_left_height, *right_right_height) + 1
         },
         BinaryTree {
-            metadata: (ref left_height, ref right_height), value,
+            metadata: (ref left_height, ref right_height), value: _,
             right: Some(box BinaryTree {metadata: (ref right_left_height, ref right_right_height), value: _, left: _, right: _}),
             left: None}
         => {
             *right_height == std::cmp::max(*right_left_height, *right_right_height) + 1 && *left_height == 0
         },
         BinaryTree {
-            metadata: (ref left_height, ref right_height), value,
+            metadata: (ref left_height, ref right_height), value: _,
             left: Some(box BinaryTree {metadata: (ref left_left_height, ref left_right_height), value: _, left: _, right: _}),
             right: None}
         => {
@@ -182,28 +182,28 @@ impl <'a> AvlTree<'a, i32> {
 
     fn fix_metadata(&mut self) {
         match self {
-            &mut BinaryTree {metadata: (left, right), value: _,
+            &mut BinaryTree {metadata: _, value: _,
                         left: Some(box BinaryTree {metadata: (left_left, left_right), value: _, left: _, right: _}),
                         right: Some(box BinaryTree {metadata: (right_left, right_right), value: _, left: _, right: _})}
             => {
                 self.metadata = (std::cmp::max(left_left, left_right) + 1, std::cmp::max(right_left, right_right) + 1);
                 //println!("{:?} {:?}", self.metadata, (left, right));
             }
-            &mut BinaryTree {metadata: (left, right), value: _,
+            &mut BinaryTree {metadata: _, value: _,
                         left: None,
                         right: Some(box BinaryTree {metadata: (right_left, right_right), value: _, left: _, right: _})}
             => {
                 self.metadata = (0, std::cmp::max(right_left, right_right) + 1);
                 //println!("{:?} {:?}", self.metadata, (left, right));
             }
-            &mut BinaryTree {metadata: (left, right), value: _,
+            &mut BinaryTree {metadata: _, value: _,
                         left: Some(box BinaryTree {metadata: (left_left, left_right), value: _, left: _, right: _}),
                         right: None}
             => {
                 self.metadata = (std::cmp::max(left_left, left_right) + 1, 0);
                 //println!("{:?} {:?}", self.metadata, (left, right));
             }
-            &mut BinaryTree {metadata: (left, right), value: _,
+            &mut BinaryTree {metadata: _, value: _,
                         left: None,
                         right: None}
             => {

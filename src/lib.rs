@@ -5,53 +5,9 @@
 extern crate quickcheck;
 extern crate rand;
 
-use std::iter::Map;
-use std::fmt::Debug;
-use std::fmt::Formatter;
-use std::fmt::Result;
 use std::mem;
 use quickcheck::Arbitrary;
 use quickcheck::Gen;
-
-#[test]
-fn it_works() {
-    let mut example_tree: BinaryTree<i32, (i8, i8)> = BinaryTree {
-        metadata: (1, 1),
-        value: 4,
-        left: Some(Box::new(BinaryTree {
-            metadata: (0, 0),
-            value: 3,
-            left: None,
-            right: None
-        })),
-        right: Some(Box::new(BinaryTree {
-            metadata: (0, 0),
-            value: 5,
-            left: None,
-            right: None
-        }))
-    };
-
-    println!("{:?}", example_tree);
-    assert_eq!(3, example_tree.iter().count());
-
-    example_tree.insert(7);
-    println!("{:?}", example_tree);
-    assert_eq!(4, example_tree.iter().count());
-    example_tree.insert(2);
-    println!("{:?}", example_tree);
-    assert_eq!(5, example_tree.iter().count());
-    example_tree.insert(700);
-    println!("{:?}", example_tree);
-    assert_eq!(6, example_tree.iter().count());
-    example_tree.insert(-200);
-    println!("{:?}", example_tree);
-    assert_eq!(7, example_tree.iter().count());
-    example_tree.insert(42);
-    println!("{:?}", example_tree);
-    assert_eq!(8, example_tree.iter().count());
-    println!("\nexamples\n\n");
-}
 
 #[quickcheck]
 fn ordering_property(bt: BinaryTree<i32, (i8, i8)>) -> bool {
@@ -114,22 +70,6 @@ struct BinaryTree<V: Ord+Copy, M> {
         right: Option<Box<BinaryTree<V, M>>>
 }
 
-//impl <'a, V: Debug+Copy+Ord> Debug for AvlTree<'a, V> {
-//    #[allow(non_shorthand_field_patterns)]
-//    fn fmt(&self, f: &mut Formatter) -> Result {
-//        match self {
-//            &BinaryTree {metadata: (left_height, right_height), value, left: ref left, right: ref right} => {
-//                let mut ret = Ok(());
-//                left.as_ref().map(|v| ret = write!(f, "({:?},({},{})),", v, left_height, right_height));
-//                ret = write!(f, "({:?},({},{}))", value, left_height, right_height);
-//                right.as_ref().map(|v| ret = write!(f, ",({:?},({},{}))", v, left_height, right_height));
-//                ret
-//            },
-//            &BinaryTree::Leaf {metadata: _, value} => { write!{f, "{:?}", value} }
-//        }
-//    }
-//}
-
 impl Arbitrary for BinaryTree<i32, (i8, i8)> {
     fn arbitrary<G: Gen>(g: &mut G) -> Self {
         let mut tree = BinaryTree {metadata: (0, 0), value: g.gen_range(-1000,1000), left: None, right: None};
@@ -169,7 +109,6 @@ impl <'a, V: 'a+Ord+Copy+Clone+Send, M: 'a+Copy+Clone+Send> Iterator for BinaryT
 }
 
 type AvlTree<'a, V: 'a> = BinaryTree<V, (i8, i8)>;
-
 
 impl <'a> AvlTree<'a, i32> {
     #[allow(non_shorthand_field_patterns)]

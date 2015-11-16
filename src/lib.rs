@@ -81,11 +81,13 @@ impl Arbitrary for BinaryTree<i32, (i8, i8)> {
 }
 
 impl <'a, V: Ord+Copy+Clone+Send, M: Copy+Clone+Send> BinaryTree<V, M> {
+    #[allow(dead_code)]
     fn iter(&'a self) -> BinaryTreeIterator<'a, V, M> {
         BinaryTreeIterator {to_visit: vec![&self]}
     }
 }
 
+#[allow(dead_code)]
 struct BinaryTreeIterator<'a, V: 'a+Ord+Copy+Clone+Send, M: 'a+Copy+Clone+Send> {
     to_visit: Vec<&'a BinaryTree<V, M>>
 }

@@ -275,20 +275,25 @@ impl <'a> AvlTree<'a, i32> {
     }
 
     fn rotate_left(&mut self) {
-        let mut tmp = self.clone();
-        let mut right = self.right.clone().expect("trying to rotate right subtree up");
-        tmp.right = right.left.clone();
-        tmp.fix_metadata();
-        right.left = Some(box tmp);
-        *self = *right;
+        let mut right: &mut Option<Box<AvlTree<i32>>> = &mut Some(Box::new(BinaryTree {metadata: (0,0), value: 0, right: None, left: None}));
+        mem::swap(right, &mut self.right);
+        mem::swap(&mut self.right, &mut right.as_mut().unwrap().left);
+        mem::swap(&mut **right.as_mut().unwrap().left.as_mut().unwrap(), self);
         self.fix_metadata();
+        right.as_mut().unwrap().left.as_mut().unwrap().fix_metadata();
+        right.as_mut().unwrap().fix_metadata();
+        mem::swap(self, right.as_mut().unwrap());
     }
 
     fn rotate_right(&mut self) {
         let mut left: &mut Option<Box<AvlTree<i32>>> = &mut Some(Box::new(BinaryTree {metadata: (0,0), value: 0, left: None, right: None}));
         mem::swap(left, &mut self.left);
-        mem::swap(&mut self.left, &mut left.unwrap().right);
-
+        mem::swap(&mut self.left, &mut left.as_mut().unwrap().right);
+        mem::swap(&mut **left.as_mut().unwrap().right.as_mut().unwrap(), self);
+        self.fix_metadata();
+        left.as_mut().unwrap().right.as_mut().unwrap().fix_metadata();
+        left.as_mut().unwrap().fix_metadata();
+        mem::swap(self, left.as_mut().unwrap());
     }
 
     fn balance(&mut self) {

@@ -4,6 +4,5 @@ version = "0.1.0"
 authors = ["Ezekiel Smithburg <tehgeekmeister@gmail.com>"]
 
 [dependencies]
-generic-array = "0.0.3"
 quickcheck = "0.2.24"
 quickcheck_macros = "0.2.24"

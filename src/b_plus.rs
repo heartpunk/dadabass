@@ -76,34 +76,104 @@ impl <T: Clone+Send+Ord+Copy+Bounded+Debug> BPlusTree<T> {
         tree
     }
 
-    fn insert(&mut self, new_value: T) {
-        for i in 1..self.children.len() - 1 {
-            let (left, right) = self.children.split_at_mut(i);
-            let last_left_index = left.len()-1;
-            match (&mut left[last_left_index], &mut right[0]) {
-                (&mut Some(( ref max, _)), &mut Some((_, _))) if &new_value <= max => continue,
-                (&mut Some(( ref max_1, _)), &mut Some(( ref max_2, ref mut child))) if &new_value > max_1 && &new_value < max_2 => {
-                    unreachable!();
-                    child.insert(new_value)
+    fn leaf_containing(value: T) -> Self {
+        let mut tree = BPlusTree::leaf();
+        tree.data = Some(box value);
+        tree
+    }
+
+    fn internal_node(values: Vec<Option<(T, Box<BPlusTree<T>>)>>) -> Self {
+        assert!(values.len() <= 10);
+        let mut tree: BPlusTree<T> = BPlusTree {
+            capacity: 10,
+            children: [None, None, None, None, None, None, None, None, None, None],
+            data: None,
+            metadata: BPlusNodeType::Internal
+        };
+        for tuple in values.into_iter().enumerate().take(10) {
+            tree.children[tuple.0] = tuple.1
+        }
+        tree
+    }
+
+    fn populated_children(&self) -> &[Option<(T, Box<BPlusTree<T>>)>] {
+        let mut i = 0;
+        for tuple in self.children.into_iter() {i += 1; if tuple.is_none() {i -= 1;break}}
+        // split_at is exclusive of the index, so we don't adjust the index down by one.
+        // in other words, i points at the first None, not the last Some.
+        self.children.split_at(i).0
+    }
+
+    fn median_index(&self) -> usize {
+        self.populated_children().len() / 2
+    }
+
+    fn median(&self) -> T {
+        self.children[self.median_index()].as_ref().expect("this should be a Some by construction").0
+    }
+
+    fn split(&self) -> (Self, Self) {
+        let (left, right) = self.children.split_at(self.median_index());
+        (BPlusTree::internal_node(left.to_vec()), BPlusTree::internal_node(right.to_vec()))
+    }
+
+    fn used_capacity(&self) -> usize {
+        self.populated_children().len()
+    }
+
+    fn insert_node(&mut self, node: Option<(T, Box<BPlusTree<T>>)>) {
+        assert!(self.capacity > self.used_capacity());
+        let final_index = self.children.len() - 1;
+        self.children[final_index] = node;
+        self.children.sort_by(|a, b|
+                              match (a,b) {
+                                  (&Some((max_1, _)), &Some((max_2, _))) => max_1.cmp(&max_2),
+                                  (&None, &Some(_)) => std::cmp::Ordering::Greater,
+                                  (&Some(_), &None) => std::cmp::Ordering::Less,
+                                  (&None, &None) => std::cmp::Ordering::Equal,
+                              })
+    }
+
+    fn insert(&mut self, new_value: T) -> Option<(T, BPlusTree<T>)> {
+        if self.used_capacity() < self.capacity {
+            self.insert_node(Some((new_value, box BPlusTree::leaf_containing(new_value))));
+            None
+        } else {
+            let go_left = new_value < self.median();
+            let (mut left, mut right) = self.split();
+
+            if go_left {
+                match left.insert(new_value) {
+                    Some((t, result)) => {
+                        left.insert_node(Some((t, box result)))
+                    }
+                    _ => ()
                 }
-                (&mut Some(( ref max, box ref mut child)), &mut None) if &new_value <= max => {
-                    println!("\n\nchild before insertion: {:?}\n", child);
-                    child.insert(new_value);
-                    println!("\n\nchild after insertion: {:?}\n", child);
-                    assert!(i < 2);
-                    break
+            } else {
+                match right.insert(new_value) {
+                    Some((t, result)) => {
+                        right.insert_node(Some((t, box result)))
+                    }
+                    _ => ()
                 }
-                (&mut Some(( ref max, _)), ref mut slot) if &new_value > max => {
-                    unreachable!();
-                    **slot = Some((*max,box BPlusTree::leaf()));
-                    break
+            };
+
+            match self.metadata {
+                BPlusNodeType::Root => {
+                    let max_value_in_left = left.populated_children()[left.used_capacity() - 1].as_ref().expect("").0;
+                    let max_value_in_right = right.populated_children()[right.used_capacity() - 1].as_ref().expect("").0;
+                    self.children = [Some((max_value_in_left, box left)), Some((max_value_in_right, box right)), None, None, None, None, None, None, None, None];
+                    None
                 }
-                (ref mut slot, _) => {
-                    **slot = Some(((T::max_value(), box BPlusTree::leaf())))
+                BPlusNodeType::Internal => {
+                    *self = left;
+                    Some((right.children[0].as_ref().expect("must be a value because we just split").0, right))
                 }
-                //(&mut Some(_), _) => unreachable!(),
+                BPlusNodeType::Leaf => {
+                    panic!("haven't figured out what to do here yet.")
+                }
             }
-      }
+        }
     }
 }
 

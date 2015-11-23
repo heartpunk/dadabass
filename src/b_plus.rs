@@ -24,6 +24,39 @@ enum BPlusNodeType {
     Leaf
 }
 
+impl <'a, T: Ord+Copy+Clone+Send> BPlusTree<T> {
+    #[allow(dead_code)]
+    fn iter(&'a self) -> BPlusTreeIterator<'a, T> {
+        BPlusTreeIterator {to_visit: vec![&self]}
+    }
+}
+
+#[allow(dead_code)]
+struct BPlusTreeIterator<'a, T: 'a+Ord+Copy+Clone+Send> {
+    to_visit: Vec<&'a BPlusTree<T>>
+}
+
+impl <'a, T: 'a+Ord+Copy+Clone+Send+Bounded+Debug> Iterator for BPlusTreeIterator<'a, T> {
+    type Item = &'a BPlusTree<T>;
+
+    fn next(&mut self) -> Option<&'a BPlusTree<T>> {
+        let ret = self.to_visit.pop();
+        match ret {
+            Some(&ref next) => {
+                for child in next.populated_children().iter().rev() {
+                    self.to_visit.push(&child
+                                       .as_ref()
+                                       .expect("populated_children filters nones")
+                                       .1
+                                       )
+                }
+            }
+            None => ()
+        }
+        ret
+    }
+}
+
 trait Bounded {
     fn max_value() -> Self;
     fn min_value() -> Self;

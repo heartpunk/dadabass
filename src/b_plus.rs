@@ -29,6 +29,11 @@ impl <'a, T: Ord+Copy+Clone+Send> BPlusTree<T> {
     fn iter(&'a self) -> BPlusTreeIterator<'a, T> {
         BPlusTreeIterator {to_visit: vec![&self]}
     }
+
+    #[allow(dead_code)]
+    fn path_iter(&self) -> BPlusTreePathIterator<T> {
+        BPlusTreePathIterator {to_visit: vec![vec![self.clone()]]}
+    }
 }
 
 #[allow(dead_code)]
@@ -54,6 +59,33 @@ impl <'a, T: 'a+Ord+Copy+Clone+Send+Bounded+Debug> Iterator for BPlusTreeIterato
             None => ()
         }
         ret
+    }
+}
+
+#[allow(dead_code)]
+struct BPlusTreePathIterator<T: Ord+Copy+Clone+Send> {
+    to_visit: Vec<Vec<BPlusTree<T>>>
+}
+
+impl <T: Ord+Copy+Clone+Send+Bounded+Debug> Iterator for BPlusTreePathIterator<T> {
+    type Item = Vec<BPlusTree<T>>;
+
+    fn next(&mut self) -> Option<Vec<BPlusTree<T>>> {
+        let maybe_path = self.to_visit.pop();
+        match maybe_path {
+            Some(ref path) => {
+                let last_index = path.len() - 1;
+                let next = &path[last_index];
+                for child in next.populated_children().iter().rev() {
+                    let mut new_path = path.clone();
+                    let unwrapped_child = *child.as_ref().expect("populated_children filters nones").1.clone();
+                    new_path.push(unwrapped_child);
+                    self.to_visit.push(new_path);
+                }
+            }
+            None => ()
+        }
+        maybe_path
     }
 }
 
@@ -263,6 +295,16 @@ fn internal_nodes_have_either_all_leaves_or_all_internal_nodes_for_children(bt: 
              .all(|child|
                   child.metadata == BPlusNodeType::Leaf)
              )
+}
+
+#[quickcheck]
+fn all_leaves_are_at_same_height(bt: BPlusTree<i32>) -> bool {
+    let number_of_heights =
+        bt.path_iter()
+        .filter(|path| path[path.len() - 1].metadata == BPlusNodeType::Leaf)
+        .map(|path| path.len())
+        .collect::<std::collections::HashSet<usize>>().len();
+    number_of_heights == 0 || number_of_heights == 1
 }
 
 #[test]

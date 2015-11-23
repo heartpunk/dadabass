@@ -17,7 +17,7 @@ struct NAryTree<T: Clone+Ord, M: Clone> {
     metadata: M
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone,Debug,Eq,PartialEq)]
 enum BPlusNodeType {
     Root,
     Internal,
@@ -223,4 +223,45 @@ impl Arbitrary for BPlusTree<i32> {
 #[quickcheck]
 fn lol(_: BPlusTree<i32>) -> bool {
     true
+}
+
+#[quickcheck]
+fn only_one_root(bt: BPlusTree<i32>) -> bool {
+    bt.iter().filter(|bt| bt.metadata == BPlusNodeType::Root).count() == 1
+}
+
+#[quickcheck]
+fn leaves_have_no_children(bt: BPlusTree<i32>) -> bool {
+    bt.iter().filter(|bt| bt.metadata == BPlusNodeType::Leaf).all(|bt| bt.used_capacity() == 0)
+}
+
+#[quickcheck]
+fn internal_nodes_have_only_leaves_or_internal_nodes_for_children(bt: BPlusTree<i32>) -> bool {
+    bt.iter()
+        .filter(|bt| bt.metadata == BPlusNodeType::Internal)
+        .all(|bt|
+             bt.populated_children().iter()
+             .map(|child| &child.as_ref().expect("this should always be Some or populated_children is broken").1)
+             .all(|child|
+                  child.metadata == BPlusNodeType::Internal
+                  || child.metadata == BPlusNodeType::Leaf)
+             )
+}
+
+#[test]
+fn splits_preserve_count() {
+    let mut tree: BPlusTree<i32> = BPlusTree::empty();
+    let mut insertions = 0;
+    for i in 0..10 {
+        tree.insert(i);
+        insertions += 1;
+    }
+    assert!(tree.iter().filter(|bt| bt.metadata == BPlusNodeType::Leaf).count() == 10);
+    assert!(insertions == 10);
+    for i in 10..12 {
+        tree.insert(i);
+        insertions += 1;
+    }
+    assert!(insertions == 12);
+    assert!(tree.iter().filter(|bt| bt.metadata == BPlusNodeType::Leaf).count() == 12);
 }

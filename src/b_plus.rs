@@ -248,6 +248,23 @@ fn internal_nodes_have_only_leaves_or_internal_nodes_for_children(bt: BPlusTree<
              )
 }
 
+#[quickcheck]
+fn internal_nodes_have_either_all_leaves_or_all_internal_nodes_for_children(bt: BPlusTree<i32>) -> bool {
+    bt.iter()
+        .filter(|bt| bt.metadata == BPlusNodeType::Internal)
+        .all(|bt|
+             bt.populated_children().iter()
+             .map(|child| &child.as_ref().expect("this should always be Some or populated_children is broken").1)
+             .all(|child|
+                  child.metadata == BPlusNodeType::Internal)
+             ||
+             bt.populated_children().iter()
+             .map(|child| &child.as_ref().expect("this should always be Some or populated_children is broken").1)
+             .all(|child|
+                  child.metadata == BPlusNodeType::Leaf)
+             )
+}
+
 #[test]
 fn splits_preserve_count() {
     let mut tree: BPlusTree<i32> = BPlusTree::empty();

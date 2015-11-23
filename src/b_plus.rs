@@ -213,10 +213,8 @@ impl <T: Clone+Send+Ord+Copy+Bounded+Debug> BPlusTree<T> {
 impl Arbitrary for BPlusTree<i32> {
     fn arbitrary<G: Gen>(g: &mut G) -> Self {
         let mut tree: BPlusTree<i32> = BPlusTree::empty();
-        println!("{:?}", tree);
         while g.gen() {
-            tree.insert(g.gen());
-            println!("{:?}", tree)
+            for i in 0..15 { tree.insert(g.gen()); }
         }
         tree
     }

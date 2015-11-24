@@ -324,3 +324,18 @@ fn splits_preserve_count() {
     assert!(insertions == 12);
     assert!(tree.iter().filter(|bt| bt.metadata == BPlusNodeType::Leaf).count() == 12);
 }
+
+#[test]
+fn path_iterator_example_test() {
+    let mut tree: BPlusTree<i32> = BPlusTree::empty();
+
+    for i in 0..12 {
+        tree.insert(i);
+    }
+
+    assert_eq!(15, tree.path_iter().count());
+    assert_eq!(1, tree.path_iter().filter(|path| path.len() == 1).count());
+    println!("{:?}", tree.path_iter().filter(|path| path.len() == 2).collect::<Vec<Vec<BPlusTree<i32>>>>());
+    assert_eq!(2, tree.path_iter().filter(|path| path.len() == 2).count());
+    assert_eq!(12, tree.path_iter().filter(|path| path.len() == 3).count());
+}

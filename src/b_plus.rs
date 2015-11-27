@@ -7,7 +7,7 @@ use std::fmt::Debug;
 use quickcheck::Arbitrary;
 use quickcheck::Gen;
 
-#[derive(Debug)]
+#[derive(Debug,Eq,PartialEq)]
 struct NAryTree<T: Clone+Ord, M: Clone> {
     capacity: usize,
     children: [Option<
@@ -33,6 +33,10 @@ impl <'a, T: Ord+Copy+Clone+Send> BPlusTree<T> {
     #[allow(dead_code)]
     fn path_iter(&self) -> BPlusTreePathIterator<T> {
         BPlusTreePathIterator {to_visit: vec![vec![self.clone()]]}
+    }
+
+    fn search_iter(&'a self, value: T) -> BPlusTreeSearchIterator<'a, T> {
+        BPlusTreeSearchIterator {value: value, current: &self}
     }
 }
 
@@ -86,6 +90,39 @@ impl <T: Ord+Copy+Clone+Send+Bounded+Debug> Iterator for BPlusTreePathIterator<T
             None => ()
         }
         maybe_path
+    }
+}
+
+struct BPlusTreeSearchIterator<'a, T: 'a+Ord+Copy+Clone+Send> {
+    value: T,
+    current: &'a BPlusTree<T>
+}
+
+impl <'a, T: 'a+Ord+Copy+Clone+Send+Bounded+Debug> Iterator for BPlusTreeSearchIterator<'a, T> {
+    type Item = &'a mut BPlusTree<T>;
+
+    fn next(&mut self) -> Option<&'a mut BPlusTree<T>> {
+        let ret = self.current;
+        for pair in ret.populated_children().windows(2) {
+            match pair {
+                [Some((ref last_val, _)), Some((ref current_val, ref current_child))] => {
+                    if &self.value > last_val && &self.value < current_val {
+                        self.current = current_child;//.search_for_closest_node(self.value)
+                    } else {
+                        continue
+                    }
+                }
+                [Some((ref val, ref child)), None] | [Some((ref val, ref child))] => {
+                    self.current = child;//.search_for_closest_node(self.value)
+                }
+                _ => unreachable!()
+            }
+        };
+        if ret == self.current {
+            None
+        } else {
+            Some(ret)
+        }
     }
 }
 
@@ -186,6 +223,10 @@ impl <T: Clone+Send+Ord+Copy+Bounded+Debug> BPlusTree<T> {
         self.populated_children().len()
     }
 
+    fn path_to_node(&self, value: T) -> Vec<&mut BPlusTree<T>> {
+        self.search_iter(value).collect::<Vec<&mut BPlusTree<T>>>()
+    }
+
     fn insert_node(&mut self, node: Option<(T, Box<BPlusTree<T>>)>) {
         assert!(self.capacity > self.used_capacity());
         let final_index = self.children.len() - 1;
@@ -199,7 +240,13 @@ impl <T: Clone+Send+Ord+Copy+Bounded+Debug> BPlusTree<T> {
                               })
     }
 
-    fn insert(&mut self, new_value: T) -> Option<(T, BPlusTree<T>)> {
+    fn insert(&mut self, new_value: T) {
+        unreachable!()//self.search_for_closest_node(new_value).insert_at(new_value);
+    }
+
+    fn insert_at(&mut self, new_value: T) -> Option<(T, BPlusTree<T>)> {
+        // this is a bug. should search for appropriate node and insert there. if that node doesn't
+        // have capacity, then we split (and propagate splits upward as needed).
         if self.used_capacity() < self.capacity {
             self.insert_node(Some((new_value, box BPlusTree::leaf_containing(new_value))));
             None
@@ -208,14 +255,14 @@ impl <T: Clone+Send+Ord+Copy+Bounded+Debug> BPlusTree<T> {
             let (mut left, mut right) = self.split();
 
             if go_left {
-                match left.insert(new_value) {
+                match left.insert_at(new_value) {
                     Some((t, result)) => {
                         left.insert_node(Some((t, box result)))
                     }
                     _ => ()
                 }
             } else {
-                match right.insert(new_value) {
+                match right.insert_at(new_value) {
                     Some((t, result)) => {
                         right.insert_node(Some((t, box result)))
                     }
@@ -226,11 +273,15 @@ impl <T: Clone+Send+Ord+Copy+Bounded+Debug> BPlusTree<T> {
             match self.metadata {
                 BPlusNodeType::Root => {
                     let max_value_in_left = left.populated_children()[left.used_capacity() - 1].as_ref().expect("").0;
-                    let max_value_in_right = right.populated_children()[right.used_capacity() - 1].as_ref().expect("").0;
+                    let max_value_in_right = T::max_value();
+                    left.metadata = BPlusNodeType::Internal;
+                    right.metadata = BPlusNodeType::Internal;
                     self.children = [Some((max_value_in_left, box left)), Some((max_value_in_right, box right)), None, None, None, None, None, None, None, None];
                     None
                 }
                 BPlusNodeType::Internal => {
+                    left.metadata = BPlusNodeType::Internal;
+                    right.metadata = BPlusNodeType::Internal;
                     *self = left;
                     Some((right.children[0].as_ref().expect("must be a value because we just split").0, right))
                 }
@@ -270,7 +321,7 @@ fn leaves_have_no_children(bt: BPlusTree<i32>) -> bool {
 #[quickcheck]
 fn internal_nodes_have_only_leaves_or_internal_nodes_for_children(bt: BPlusTree<i32>) -> bool {
     bt.iter()
-        .filter(|bt| bt.metadata == BPlusNodeType::Internal)
+        //.filter(|bt| bt.metadata == BPlusNodeType::Internal)
         .all(|bt|
              bt.populated_children().iter()
              .map(|child| &child.as_ref().expect("this should always be Some or populated_children is broken").1)
@@ -296,6 +347,16 @@ fn internal_nodes_have_either_all_leaves_or_all_internal_nodes_for_children(bt: 
                   child.metadata == BPlusNodeType::Leaf)
              )
 }
+
+//#[quickcheck]
+//fn root_node_always_covers_entire_range(bt: BPlusTree<i32>) -> bool {
+//    let children = bt.iter()
+//        .filter(|bt| bt.metadata == BPlusNodeType::Root)
+//        .collect::<Vec<&BPlusTree<i32>>>()
+//        .pop().expect("all trees must have roots")
+//        .populated_children();
+//    children[children.len() - 1].as_ref().expect("we trust populated_children").0 == std::i32::MAX
+//}
 
 #[quickcheck]
 fn all_leaves_are_at_same_height(bt: BPlusTree<i32>) -> bool {

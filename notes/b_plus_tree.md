@@ -3,7 +3,7 @@ B+ Trees
 
 B+ trees are one of the fundamental datastructures for implementing databases. We often think of database storage as being basically flat, sequential files. That is, in fact, sometimes what is done (it's called ISAM). This has some pretty serious flaws, though. For example, if you want to modify a particular record, and they aren't fixed size, you have to guess about where that record is, and then scooch back and forth until you find it. If records are fixed size, that particular problem goes away. However, if you have a nonsequential primary key, want to sort the data by primary key (this is a pretty good idea), then inserts mean you have to move O(n) data to do an insert (because on average half of the data will be to the right of where you want to insert, and you'll have to shift that data over). That's clearly not good.
 
-B+ trees still use relatively few seeks to find the data, but you can insert without shifting data around. In common cases, this avoids the scooching around problem, too, but Knuth mentions it may sometimes be desirable to have that at the lower levels of the tree.
+B+ trees still use relatively few seeks to find the data, but you can insert without shifting data around. This also avoids the scooching around problem.
 
 What Are They?
 --------------

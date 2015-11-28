@@ -35,6 +35,7 @@ Invariants
  * Unique amongst root/internal nodes.
  * Also unique across leaves.
  * All keys in root/internal nodes will also be in the set of keys in leaf nodes. Put differently, the set of keys for root and internal nodes is a proper subset of the set of keys for leaves.
+  * When there is only one node (the root), this is not yet true.
 
 Algorithms
 ----------

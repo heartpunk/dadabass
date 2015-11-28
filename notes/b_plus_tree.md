@@ -8,7 +8,7 @@ B+ trees still use relatively few seeks to find the data, but you can insert wit
 What Are They?
 --------------
 
-The short (and not terribly useful) answer is that they are B-trees where all the data is stores in leaves. But unless you know what a B-tree is, that doesn't help much, and unfortunately, as many people have noted, the literature is inconsistent on how to implement B-trees as well as what terminology to use for aspects of their implementations.
+The short (and not terribly useful) answer is that they are B-trees where all the data is stores in leaves. But unless you know what a B-tree is, that doesn't help much, and unfortunately, as many people have noted, the literature is inconsistent on how to implement B-trees as well as what terminology to use for aspects of their implementations. B-trees are a kind of multi-way tree, which is to say that there are many children at each node. While this doesn't change the big o performance substantially, it does make things a lot faster when you're interacting with caching layers or block IO. For example, it costs about the to read a whole block as to read part of one in most disks, so if you can make your nodes take up exactly one block, and maximize the branching that happens per block you read from disk, then you can minimize your IO. As a result, B+ trees often end up using about 100-1,000 keys, from what I've read (this could be wrong, but I don't think it's _wildly_ wrong).
 
 Rather than get hung up on the differences, I'll paint a rough picture first of what properties they all share:
 

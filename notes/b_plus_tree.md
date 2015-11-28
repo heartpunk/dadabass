@@ -43,3 +43,6 @@ Algorithms
     * If the value we're searching for is less than the first node, recurse to the leftmost child.
     * Iterate over all consecutive pairs of values, while maintaining a zero indexed counter for which pair we're on. If the value we're inserting is greater than the left value, and less than or equal to the right value, then recurse on the child corresponding to the iteration index.
     * If we haven't been able to recurse in the previous two cases, then recurse on the rightmost child. (FIXME: I think this is likely to be the child at the spot corresponding to the iteration index's final value plus two. Should check this.)
+* Insertion starts by searching for the leaf node that would hold the node, if it were already in the tree.
+  * If the value is already in the leaf, do nothing.
+  * If the leaf is at capacity, follow the steps for splitting, but consider the new value as if it were already part of the node when creating the two new nodes/propagating the median upwards.

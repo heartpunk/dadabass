@@ -38,3 +38,8 @@ Algorithms
 * If a node reaches capacity, it is split into three chunks: a median value, a new node with all the keys less than the median, and a new node with all the keys greater than the median. What happens next depends on if it's the root or an internal node.
   * When a root node is split, both sides of the split are retained, and a new root is created that points to the two sides of the split. This is how the tree grows up from the top, as mentioned previously.
   * When an internal node is split, both post-split nodes are inserted into the internal node's parent, and the median value is used as the key to separate them.
+* Search:
+  * Starting from the from the root:
+    * If the value we're searching for is less than the first node, recurse to the leftmost child.
+    * Iterate over all consecutive pairs of values, while maintaining a zero indexed counter for which pair we're on. If the value we're inserting is greater than the left value, and less than or equal to the right value, then recurse on the child corresponding to the iteration index.
+    * If we haven't been able to recurse in the previous two cases, then recurse on the rightmost child. (FIXME: I think this is likely to be the child at the spot corresponding to the iteration index's final value plus two. Should check this.)

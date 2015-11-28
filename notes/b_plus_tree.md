@@ -14,7 +14,7 @@ Rather than get hung up on the differences, I'll paint a rough picture first of 
 
 Descriptions
 ------------
-* They grow from the top. In other words, when a B+ tree gets full, you add a new root, and split the existing root.
+* They grow from the top. In other words, when a B+ tree gets full, you add a new root, and split the existing root. *This is why they are self-balancing and all leaves are at the same level*.
 * There are three node types:
   * Root: there's only one, it's at the top.
   * Internal: only used to embody the search structure.

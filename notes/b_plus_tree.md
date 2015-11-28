@@ -23,7 +23,9 @@ Descriptions
 * Internal and root nodes both have a list of keys of length one shorter than the maximum allowable number of children per node.
   * This is an annoyingly subtle point, so it bears some emphasis. If you have an equal number of keys and children, insertion gets complicated. Why? Because the tree must express the full range of possible values. At the root, this means that the rightmost *populated* entry in the child array must always be the maximal value for the type in question (even if this is infinity). That's a little annoying, and requires a tacky special case, but isn't too hard. For internal nodes, however, it gets pretty messy, because you have to propagate the constraints of the rightmost child down through all the rightmost children, so you don't end up with gaps in what data your tree has space for. This wouldn't be so bad, except for splits, which are covered further down this list.
 * Leaves can either contain the data directly, or have a pointer (whether memory, disk, or whatever based, so long as it provides O(1) access to the data).
-* The keys are used differently in leaves (or lowest tier internal nodes). They specify which slot in the node contains the data (or the leaf that points to the data). This means that final tier internal nodes/leaf nodes can only have a maximum of `n-1` elements in them, where `n` is the normal capacity.
+* Keys are used differently in leaves than internal/root nodes.
+  * In internal/root nodes, the value of `key[i]` specifies that all keys in `children[j]` where `j <= i` are less than `key[i]`, as well as that all keys in `children[j]` where `j > i` are greater than or equal to `key[i]`.
+  * In leaves, `key[i]` denotes that there is a corresponding element in `values[i]`. As a result, leaf nodes can only store `n-1` values/pointers to values in them, where `n` is the capacity root/internal nodes have for children..
 
 Invariants
 ----------

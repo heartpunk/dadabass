@@ -28,7 +28,7 @@ Descriptions
 Invariants
 ----------
 
-* All leaves are always on the same level. As a result, a B+ tree is self balancing *without rotations*, at least for inserts.
+* All leaves are always on the same level. As a result, a B+ tree is self balancing *without rotations*, at least for inserts. This is precisely because of the fact that B+ trees grow from the top, as a result of splitting root nodes.
 * Root nodes may have as few as two children after sufficient insertions have been performed. They start empty. They must have fewer children than their overall capacity.
 * Internal nodes must have `ceil(n/2) <= num_children <= n` children.
 * Keys

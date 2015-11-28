@@ -31,6 +31,10 @@ Invariants
 * All leaves are always on the same level. As a result, a B+ tree is self balancing *without rotations*, at least for inserts.
 * Root nodes may have as few as two children after sufficient insertions have been performed. They start empty. They must have fewer children than their overall capacity.
 * Internal nodes must have `ceil(n/2) <= num_children <= n` children.
+* Keys
+ * Unique amongst root/internal nodes.
+ * Also unique across leaves.
+ * All keys in root/internal nodes will also be in the set of keys in leaf nodes. Put differently, the set of keys for root and internal nodes is a proper subset of the set of keys for leaves.
 
 Algorithms
 ----------

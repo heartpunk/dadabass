@@ -111,6 +111,7 @@ type AvlTree<'a, V: 'a> = BinaryTree<V, (i8, i8)>;
 
 impl <'a> AvlTree<'a, i32> {
     #[allow(non_shorthand_field_patterns)]
+    // maybe document why there's a return value.
     fn insert(&mut self, new_value: i32) -> i8 {
         let ret = match *self {
             BinaryTree {value, left: None, right: None, ..} => {

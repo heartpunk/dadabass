@@ -6,6 +6,9 @@ use std::mem;
 use quickcheck::Arbitrary;
 use quickcheck::Gen;
 
+// This property ensures that all elements to the left of the node we're handed are less
+// than the value that node contains, and all elements to the right greater than. Equal
+// is not handled as duplicates are not allowed.
 #[quickcheck]
 fn ordering_property(bt: BinaryTree<i32, (i8, i8)>) -> bool {
     match bt {
@@ -22,6 +25,11 @@ fn ordering_property(bt: BinaryTree<i32, (i8, i8)>) -> bool {
     }
 }
 
+// This implementation of an AVL tree tracks height of left and right children as a
+// 2-tuple of i8s that represent the height of the respective children.
+
+// This property recursively walks the tree and verifies that the height metadata is
+// in correspondence with the recursive calculation of height.
 #[quickcheck]
 fn height_is_maintained(bt: AvlTree<i32>) -> bool {
     match bt {
@@ -52,6 +60,8 @@ fn height_is_maintained(bt: AvlTree<i32>) -> bool {
     }
 }
 
+// This property verifies that, for the node we're given, the height metadata never
+// differs by more than 1. This is the definition of a tree being balanced.
 #[quickcheck]
 fn balance_property(bt: BinaryTree<i32, (i8, i8)>) -> bool {
     match bt {
@@ -67,6 +77,9 @@ struct BinaryTree<V: Ord+Copy, M> {
         right: Option<Box<BinaryTree<V, M>>>
 }
 
+// An arbitrary tree is formed by starting with an empty tree and inserting an arbitrary
+// number of arbitrary values. Generating the tree any other way would defeat the purpose
+// of the property based tests.
 impl Arbitrary for BinaryTree<i32, (i8, i8)> {
     fn arbitrary<G: Gen>(g: &mut G) -> Self {
         let mut tree = BinaryTree {metadata: (0, 0), value: g.gen_range(-1000,1000), left: None, right: None};
@@ -77,6 +90,8 @@ impl Arbitrary for BinaryTree<i32, (i8, i8)> {
     }
 }
 
+// The iterator stuff is only used in the quickcheck properties. Specifically for
+// checking ordering.
 impl <'a, V: Ord+Copy+Clone+Send, M: Copy+Clone+Send> BinaryTree<V, M> {
     #[allow(dead_code)]
     fn iter(&'a self) -> BinaryTreeIterator<'a, V, M> {
@@ -92,6 +107,7 @@ struct BinaryTreeIterator<'a, V: 'a+Ord+Copy+Clone+Send, M: 'a+Copy+Clone+Send> 
 impl <'a, V: 'a+Ord+Copy+Clone+Send, M: 'a+Copy+Clone+Send> Iterator for BinaryTreeIterator<'a, V, M> {
     type Item = &'a BinaryTree<V, M>;
 
+    // Do depth first search as an iterator.
     fn next(&mut self) -> Option<&'a BinaryTree<V, M>> {
         let ret = self.to_visit.pop();
         match ret {
@@ -111,7 +127,12 @@ type AvlTree<'a, V: 'a> = BinaryTree<V, (i8, i8)>;
 
 impl <'a> AvlTree<'a, i32> {
     #[allow(non_shorthand_field_patterns)]
-    // maybe document why there's a return value.
+    // As we recurse down, we build up an implicit insertion path on the stack.
+    // If we do an insert succesfully (i.e.: it is not a duplicate value we are
+    // attempting to insert), then we may or may not need to propagate up the
+    // stack how much the heights changed. The return value tells the caller
+    // how much the maximal height changed at our layer, so it can do the
+    // appropriate logic to decide what bookkeeping changes it needs to do.
     fn insert(&mut self, new_value: i32) -> i8 {
         let ret = match *self {
             BinaryTree {value, left: None, right: None, ..} => {
@@ -180,6 +201,10 @@ impl <'a> AvlTree<'a, i32> {
         ret
     }
 
+    // For each child we have, set the metadata at our layer of the tree to be
+    // 1 + max(left_height, right_height) where left_height and right_height are
+    // the values stored in that child's metadata. This is more verbose than it ideally
+    // would be because we have to match on every possible case.
     fn fix_metadata(&mut self) {
         match self {
             &mut BinaryTree {
@@ -204,6 +229,8 @@ impl <'a> AvlTree<'a, i32> {
         }
     }
 
+    // Rotations aren't inherently that complicated, but they sure are in Rust!
+    // (In other words, you're on your own here for now.)
     fn rotate_left(&mut self) {
         let mut right: &mut Option<Box<AvlTree<i32>>> = &mut Some(Box::new(BinaryTree {metadata: (0,0), value: 0, right: None, left: None}));
         mem::swap(right, &mut self.right);
@@ -226,8 +253,20 @@ impl <'a> AvlTree<'a, i32> {
         mem::swap(self, left.as_mut().unwrap());
     }
 
+    // As stated above, the definition of a balanced tree is one where the height
+    // of any pair of children does not differ by more than one. As a result, to
+    // ensure that our tree is balanced, as soon as difference hits 2 or -2, we
+    // do the appropriate rotations. What the appropriate rotations are is a bit
+    // subtle, and out of scope for explaining here. However, there's a pretty good
+    // explanation at the link below this comment, and on wikipedia.
+
+    // http://www.cise.ufl.edu/~nemo/cop3530/AVL-Tree-Rotations.pdf
     fn balance(&mut self) {
         let difference: i8 = self.metadata.0 - self.metadata.1;
+
+        // if this fails, all hope is lost.
+        assert!(difference <= 2);
+        assert!(difference >= -2);
 
         if difference == 2  {
             match self.left {

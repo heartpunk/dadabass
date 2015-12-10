@@ -188,22 +188,18 @@ impl <'a> AvlTree<'a, i32> {
                 ..}
             => {
                 self.metadata = (std::cmp::max(left_left, left_right) + 1, std::cmp::max(right_left, right_right) + 1);
-                //println!("{:?} {:?}", self.metadata, (left, right));
             }
             &mut BinaryTree {left: None, right: Some(box BinaryTree {metadata: (right_left, right_right), ..}), ..}
             => {
                 self.metadata = (0, std::cmp::max(right_left, right_right) + 1);
-                //println!("{:?} {:?}", self.metadata, (left, right));
             }
             &mut BinaryTree {left: Some(box BinaryTree {metadata: (left_left, left_right), ..}), right: None, ..}
             => {
                 self.metadata = (std::cmp::max(left_left, left_right) + 1, 0);
-                //println!("{:?} {:?}", self.metadata, (left, right));
             }
             &mut BinaryTree {left: None, right: None, ..}
             => {
                 self.metadata = (0, 0);
-                //println!("{:?} {:?}", self.metadata, (left, right));
             }
         }
     }

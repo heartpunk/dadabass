@@ -88,23 +88,17 @@ class AVLTreeNode():
         return self.left_height - self.right_height
 
     def insert(self, value):
-        starting_max_height = 0
-
         if self.leaf:
             self.value = value
             self.become_branch()
-            return 1
         elif value > self.value:
             self.left.insert(value)
-        else:
+        elif value < self.value:
             self.right.insert(value)
+        else:
+            return # ignore duplicates
 
         self.balance()
-
-        if self.max_height > starting_max_height:
-            return 1
-        else:
-            return 0
 
     def balance(self):
         # if this assertion fails, the tree is more imbalanced than it ever should be.

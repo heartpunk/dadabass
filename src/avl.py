@@ -2,7 +2,9 @@ from random import randint
 
 class AVLTree():
     def __init__(self, value=None):
-        self._root = AVLTreeNode(self, value)
+        self._root = AVLTreeNode(self)
+        if value is not None:
+            self._root.insert(value)
 
     def insert(self, value):
         self.root.insert(value)
@@ -24,17 +26,14 @@ class AVLTreeNode():
     def empty_leaf(self):
         return AVLTreeNode(self.container)
 
-    def __init__(self, container, value=None):
-        self.value = value
+    def __init__(self, container):
+        self.value = None
         self.leaf = True
         self._left = None
         self._right = None
         self.parent = None
         self.container = container
         self.left_height = self.right_height = 0
-
-        if self.value != None:
-            self.become_branch()
 
     @property
     def left(self):

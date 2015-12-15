@@ -83,7 +83,6 @@ class AVLTreeNode():
         self.left = self.empty_leaf()
         self.right = self.empty_leaf()
         self.leaf = False
-        self.fix_height_metadata()
 
     @property
     def balance_factor(self) -> int:
@@ -101,7 +100,6 @@ class AVLTreeNode():
         else:
             self.right.insert(value)
 
-        self.fix_height_metadata()
         self.balance()
 
         if self.max_height > starting_max_height:
@@ -128,16 +126,10 @@ class AVLTreeNode():
                self.right.rotate("right")
             self.rotate("left")
 
-        self.fix_height_metadata()
-
         if not self.balance_factor in (-1,0,1):
             print(self)
             raise ValueError("the tree is too imbalanced after we attempted to balance it. "
                    "all hope is lost.")
-
-    def fix_height_metadata(self):
-        self.left_height = self.left.max_height + 1
-        self.right_height = self.right.max_height + 1
 
     def rotate(self, direction):
         assert(direction in ("left", "right"))
@@ -164,11 +156,6 @@ class AVLTreeNode():
         else:
             print(id(self), id(old_parent))
             raise
-
-        pivot.fix_height_metadata()
-
-        if self.parent is not None:
-            self.parent.fix_height_metadata()
 
 if __name__ == "__main__":
     tree = AVLTree(1)

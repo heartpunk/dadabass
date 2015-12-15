@@ -140,15 +140,12 @@ class AVLTreeNode():
 
         if old_parent is None:
             self.container.root = pivot
-
-        # WHAT IS THIS VOODOO
         elif old_parent.right == self:
             old_parent.right = pivot
         elif old_parent.left == self:
             old_parent.left = pivot
         else:
-            print(id(self), id(old_parent))
-            raise
+            raise ValueError("we are not a child of our own used-to-be parent. wat.")
 
 if __name__ == "__main__":
     tree = AVLTree(1)

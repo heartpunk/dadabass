@@ -153,5 +153,4 @@ class AVLTreeNode():
 if __name__ == "__main__":
     tree = AVLTree(1)
     for i in range(10000):
-        print(tree, "\n", "=" * 40)
         tree.insert(randint(0,10**12))

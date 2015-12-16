@@ -28,7 +28,6 @@ class AVLTreeNode():
 
     def __init__(self, container):
         self.value = None
-        self.leaf = True
         self._left = None
         self._right = None
         self.parent = None
@@ -78,10 +77,13 @@ class AVLTreeNode():
     def max_height(self) -> int:
         return max(self.left_height, self.right_height)
 
+    @property
+    def leaf(self):
+        return self.left is None and self.right is None
+
     def become_branch(self):
         self.left = self.empty_leaf()
         self.right = self.empty_leaf()
-        self.leaf = False
 
     @property
     def balance_factor(self) -> int:

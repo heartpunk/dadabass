@@ -80,7 +80,6 @@ class AVLTreeNode():
              self.right_height
         ) ) + helper(self.left) + helper(self.right)
 
-
     @property
     def max_height(self) -> int:
         return max(self.left_height, self.right_height)
@@ -229,6 +228,7 @@ class AVLTreeNode():
     def __iter__(self):
         return AVLTreeIterator(self)
 
+
 class AVLTreeIterator():
     def __init__(self, root):
         self.to_visit = []
@@ -268,6 +268,7 @@ def tree_from_values(values):
         tree.insert(value)
     return tree
 
+
 @given(st.lists(st.integers(), max_size=100))
 def test_height_is_maintained(values):
     tree = tree_from_values(values)
@@ -287,6 +288,7 @@ def test_height_is_maintained(values):
 
     height_checker(tree._root)
 
+
 @given(st.lists(st.integers(), max_size=10))
 def test_ordering_property_is_maintained(values):
     tree = tree_from_values(values)._root
@@ -299,6 +301,7 @@ def test_ordering_property_is_maintained(values):
 
     if right:
         all(sub_tree.value > tree.value for sub_tree in right)
+
 
 @given(st.lists(st.integers(), max_size=10), st.integers())
 def test_inserting_never_shrinks_the_tree(values, value):
@@ -314,23 +317,7 @@ def test_inserting_never_shrinks_the_tree(values, value):
     else:
         tree_size(tree) + 1 == tree_size(copy.deepcopy(tree).insert(value))
 
+
 if __name__ == "__main__":
     test_height_is_maintained()
     test_ordering_property_is_maintained()
-
-#    import copy
-#    try:
-#        tree = AVLTree(1)
-#        i = 0
-#        while True:
-#            #last_tree = copy.deepcopy(tree)
-#            tree.insert(randint(0,10**4))
-#            print(tree)
-#            i += 1
-#    except:
-#        #print(tree)
-#        import json
-#        for i in (0,1):
-#            with open("./avl%i.json" % i, 'w') as f:
-#                f.write(json.dumps(( tree if i == 1 else last_tree ).to_dict()))
-#        raise

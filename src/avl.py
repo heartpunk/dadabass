@@ -1,6 +1,5 @@
 import json
 from random import randint
-import functools
 
 from hypothesis import given
 import hypothesis.strategies as st
@@ -274,9 +273,8 @@ def test_height_is_maintained(values):
     tree = tree_from_values(values)
 
     def height_checker(tree):
-        #@functools.lru_cache()
         def height_for_side(side):
-           return height_checker(tree.child(side)) + 1 
+           return height_checker(tree.child(side)) + 1
 
         if tree.leaf:
             assert tree.left_height == tree.right_height == 0

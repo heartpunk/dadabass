@@ -243,13 +243,9 @@ class AVLTreeNode():
             self.rotate(other_side)
 
         self.fix_height_metadata()
-
         self.update_log("after balancing")
 
-        if not self.balance_factor in (-1,0,1):
-            print(self)
-            raise ValueError("the tree is too imbalanced after we attempted to balance it. "
-                   "all hope is lost.")
+        assert self.balance_factor in (-1, 0, 1)
 
     def fix_height_metadata(self):
         self.left_height = self.left.max_height + 1

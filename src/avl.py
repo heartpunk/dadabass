@@ -63,9 +63,6 @@ class AVLTree():
 
 
 class AVLTreeNode():
-    def empty_leaf(self):
-        return AVLTreeNode(self.container)
-
     def __init__(self, container):
         self.value = None
         self._left = None
@@ -109,8 +106,8 @@ class AVLTreeNode():
         return self.left is None and self.right is None
 
     def become_branch(self):
-        self._left = self.empty_leaf()
-        self._right = self.empty_leaf()
+        self._left = AVLTreeNode(self.container)
+        self._right = AVLTreeNode(self.container)
         self.fix_height_metadata()
 
     @property

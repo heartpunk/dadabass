@@ -205,10 +205,18 @@ class AVLTreeNode():
             self.parent.fix_height_metadata()
 
     def height(self, side):
+        """Returns the height of the child on side.
+
+        Args:
+          side: Which side the child we want the height of.
+        """
+
         assert side in ("left", "right")
         return getattr(self, "%s_height" % side)
 
     def balance(self):
+        """Balances the tree if it is imbalanced."""
+
         self.update_log("before balancing")
 
         # if this assertion fails, the tree is more imbalanced than it ever should be.

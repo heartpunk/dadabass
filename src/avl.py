@@ -81,9 +81,13 @@ class AVLTreeNode():
 
     def __str__(self, depth=0):
         def helper(child):
-            return "\n" + ( child.__str__(depth + 1) if child is not None else "  " * (depth + 1) + "nothing to see here" )
+            """Simplifies printing children."""
 
-        return ( "  " * depth + (
+            return "\n" + (child.__str__(depth + 1)
+                           if child is not None
+                           else "  " * (depth + 1) + "None")
+
+        return ("  " * depth + (
             "AVLTreeNode("
             "id = %s, "
             "value = %s, "
@@ -95,7 +99,7 @@ class AVLTreeNode():
              self.balance_factor,
              self.left_height,
              self.right_height
-        ) ) + helper(self.left) + helper(self.right)
+            )) + helper(self.left) + helper(self.right)
 
     @property
     def max_height(self) -> int:

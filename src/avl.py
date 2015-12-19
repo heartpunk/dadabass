@@ -220,7 +220,7 @@ class AVLTreeNode():
         self.update_log("before balancing")
 
         # if this assertion fails, the tree is more imbalanced than it ever should be.
-        assert(self.balance_factor in (-2,-1,0,1,2))
+        assert self.balance_factor in (-2, -1, 0, 1, 2)
 
         side = None
         if self.balance_factor == 2:

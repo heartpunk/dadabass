@@ -103,13 +103,19 @@ class AVLTreeNode():
 
     @property
     def max_height(self) -> int:
+        """Returns the height of the maximal depth subtree."""
+
         return max(self.left_height, self.right_height)
 
     @property
-    def leaf(self):
+    def leaf(self) -> bool:
+        """Returns whether this node is a leaf or not."""
+
         return self.left is None and self.right is None
 
     def become_branch(self):
+        """Converts this node from a leaf to a branch."""
+
         self._left = AVLTreeNode(self.container)
         self._right = AVLTreeNode(self.container)
         self.fix_height_metadata()

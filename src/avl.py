@@ -6,6 +6,15 @@ import hypothesis.strategies as st
 
 
 class AVLTree():
+    """The interface to an AVL tree.
+
+    The tree itself is actually represented by AVLNode instances, but because of
+    needing to be able to change which node is the root, we need a container class.
+
+    Args:
+      value: an initial value to insert into the tree.
+    """
+
     def __init__(self, value=None):
         self._root = AVLTreeNode(self)
         if value is not None:
@@ -14,6 +23,12 @@ class AVLTree():
         self.log = []
 
     def insert(self, value):
+        """Inserts the vallue into the tree.
+
+        Args:
+          value: the value to insert into the tree
+        """
+
         try:
             self.root.insert(value)
         except:
@@ -21,7 +36,9 @@ class AVLTree():
             raise
 
     def write_log(self, file_name="tree_log.json"):
-        with open("tree_log.json", "w") as f:
+        """Writes a log of operation description and tree pairs in JSON for visualization."""
+
+        with open(file_name, "w") as f:
             f.write(json.dumps(self.log))
 
     def __str__(self):
@@ -37,6 +54,8 @@ class AVLTree():
         self._root.parent = None
 
     def to_dict(self):
+        """Returns a dictionary representation of this tree."""
+
         return self._root.to_dict()
 
     def __iter__(self):

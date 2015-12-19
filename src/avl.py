@@ -234,11 +234,11 @@ class AVLTreeNode():
             if self.child(side).child(other_side) and not self.child(side).child(side):
                 self.child(side).rotate(side)
 
-            elif (self.child(side).child(other_side) and self.child(side).child(side) and \
-                # not sure why the following line matters, blindly ported from rust
-                self.child(side).height(side) - self.child(side).height(other_side) < 0):
+            elif (self.child(side).child(other_side) and self.child(side).child(side) and
+                  # not sure why the following line matters, blindly ported from rust
+                  self.child(side).height(side) - self.child(side).height(other_side) < 0):
 
-               self.child(side).rotate(side)
+                self.child(side).rotate(side)
 
             self.rotate(other_side)
 

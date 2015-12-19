@@ -122,9 +122,24 @@ class AVLTreeNode():
 
     @property
     def balance_factor(self) -> int:
+        """This represents how, and in which direction, this node is imbalanced."""
+
         return self.left_height - self.right_height
 
     def update_log(self, operation, force=False):
+        """Updates the log of operation and tree pairs for later visualization.
+
+        The log is only ever updated at the root, to avoid visualizing multiple layers
+        in one stream, which would be very confusing.
+
+        Args:
+          operation: A textual description of the operation taking place, intended
+            for human consumption.
+          force: Defaults to false. If this is true, we will append to the log regardless
+            of whether or not we are the root. This is used during operations where the
+            root has just changed, but the whole tree should still be visualized.
+        """
+
         # if we aren't the root, don't log
         if not force and (self.container.root != self):
             return
@@ -132,6 +147,12 @@ class AVLTreeNode():
         self.container.log.append([operation, self.to_dict()])
 
     def insert(self, value):
+        """Inserts the given value into the appropriate spot in the tree.
+
+        Args:
+          value: the value to insert.
+        """
+
         force = self.container._root == self
 
         def post_insert():
@@ -158,12 +179,24 @@ class AVLTreeNode():
 
     # this could be __getitem__ (same for set_child and __setitem__)
     def child(self, side):
+        """Returns the child on side (where side is "right" or "left").
+
+        Args:
+          side: One of "right" or "left". The side of the child we want to fetch."""
+
         assert side in ("left", "right")
         return getattr(self, "_" + side)
 
-    def set_child(self, side, value):
+    def set_child(self, side, new_node):
+        """Sets the child on side (where side is "right" or "left").
+
+        Args:
+          side: One of "right" or "left". The side of the child we want to set.
+          new_node: The node to set the child on side to.
+        """
+
         assert side in ("left", "right")
-        setattr(self, "_%s" % side, value)
+        setattr(self, "_%s" % side, new_node)
         child = self.child(side)
         child.parent = self
         setattr(self, "%s_height" % side, child.max_height + 1 if child else 0)

@@ -231,6 +231,8 @@ class AVLTreeNode():
 
 
 class AVLTreeIterator():
+    """Simple depth first iterator for AVLTree."""
+
     def __init__(self, root):
         self.to_visit = []
         self.current = root

@@ -278,7 +278,7 @@ def test_height_is_maintained(values):
 
     def height_checker(tree):
         def height_for_side(side):
-           return height_checker(tree.child(side)) + 1
+            return height_checker(tree.child(side)) + 1
 
         if tree.leaf:
             assert tree.left_height == tree.right_height == 0

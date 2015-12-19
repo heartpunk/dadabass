@@ -8,7 +8,7 @@ import hypothesis.strategies as st
 class AVLTree():
     """The interface to an AVL tree.
 
-    The tree itself is actually represented by AVLNode instances, but because of
+    The tree itself is actually represented by AVLTreeNode instances, but because of
     needing to be able to change which node is the root, we need a container class.
 
     Args:

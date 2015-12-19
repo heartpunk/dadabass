@@ -248,6 +248,12 @@ class AVLTreeNode():
         assert self.balance_factor in (-1, 0, 1)
 
     def fix_height_metadata(self):
+        """Locally adjust the height metadata based on the height metadata of our children.
+
+        It is crucial that this code only be called when the children have sane height
+        metadata. If not, the whole tree will almost certainly break.
+        """
+
         self.left_height = self.left.max_height + 1
         self.right_height = self.right.max_height + 1
 

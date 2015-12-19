@@ -292,8 +292,13 @@ class AVLTreeNode():
         self.update_log("after rotate %s" % rotating_side, force=force)
 
     def to_dict(self):
+        """Returns a representation of this node as a dict."""
+
         def or_dict(node):
+            """Helper function that returns the dict-ified child, or an empty dict."""
+
             return node.to_dict() if node and node.value is not None else {}
+
         return {
             "children": [or_dict(self.left), or_dict(self.right)],
             "left_height": self.left_height,

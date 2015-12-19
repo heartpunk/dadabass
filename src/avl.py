@@ -258,8 +258,14 @@ class AVLTreeNode():
         self.right_height = self.right.max_height + 1
 
     def rotate(self, rotating_side):
+        """Rotate the tree around this node, to the direction specified by rotating_side.
+
+        Args:
+          rotating_side: which direction to rotate the tree.
+        """
+
         force = self.container._root == self
-        assert(rotating_side in ("left", "right"))
+        assert rotating_side in ("left", "right")
 
         self.update_log("before rotate %s" % rotating_side, force=force)
 

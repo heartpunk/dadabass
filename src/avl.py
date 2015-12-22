@@ -321,15 +321,18 @@ class AVLTreeIterator():
     def current(self):
         return self._current
 
+    def __iter__(self):
+        return self
+
     @current.setter
     def current(self, node):
         if node:
             for side in ("left", "right"):
                 child = node.child(side)
-                if child and child.value:
+                if child and child.value is not None:
                     self.to_visit.append(child)
 
-        self._current = node if node and node.value else None
+        self._current = node if node and node.value is not None else None
 
     def __next__(self):
         ret = self.current
@@ -339,7 +342,7 @@ class AVLTreeIterator():
         else:
             self.current = None
 
-        if ret:
+        if ret is not None:
             return ret
         else:
             raise StopIteration()
@@ -393,14 +396,19 @@ def test_inserting_never_shrinks_the_tree(values, value):
     def tree_size(tree):
         return sum(1 for _ in tree)
 
-    tree = tree_from_values(values)._root
+    tree = tree_from_values(values)
+
+    new_tree = copy.deepcopy(tree)
+    new_tree.insert(value)
 
     if value in values:
-        tree_size(tree) == tree_size(copy.deepcopy(tree).insert(value))
+        assert tree_size(tree) == tree_size(new_tree)
     else:
-        tree_size(tree) + 1 == tree_size(copy.deepcopy(tree).insert(value))
+        print(tree_size(tree), tree_size(new_tree))
+        assert tree_size(tree) + 1 == tree_size(new_tree)
 
 
 if __name__ == "__main__":
+    test_inserting_never_shrinks_the_tree()
     test_height_is_maintained()
     test_ordering_property_is_maintained()

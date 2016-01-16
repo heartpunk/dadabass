@@ -1,4 +1,5 @@
 import json
+import logging
 
 from hypothesis import given
 import hypothesis.strategies as st
@@ -350,29 +351,40 @@ def tree_from_values(values):
         tree.insert(value)
     return tree
 
+def after_each_insert(values):
+    tree = AVLTree()
+    for value in values:
+        tree.insert(value)
+        yield tree
+
 
 @given(st.lists(st.integers(), max_size=100))
 def test_height_is_maintained(values):
+    """Height metadata at each node should always correspond with the actual heights of those nodes.
+    """
+
     tree = tree_from_values(values)
 
     def height_checker(tree):
-        def height_for_side(side):
-            return height_checker(tree.child(side)) + 1
+        """Checks that the height metadata for a node is correct by recursively traversing the tree.
+        """
 
         if tree.leaf:
             assert tree.left_height == tree.right_height == 0
+
             return 0
         else:
-            assert tree.left_height == height_for_side("left")
-            assert tree.right_height == height_for_side("right")
+            assert tree.left_height == height_checker(tree.child("left")) + 1
+            assert tree.right_height == height_checker(tree.child("right")) + 1
 
-            return max(height_for_side(side) for side in ("left", "right"))
+            return max(height_checker(tree.child(side)) + 1 for side in ("left", "right"))
 
     height_checker(tree._root)
 
 
 @given(st.lists(st.integers(), max_size=10))
-def test_ordering_property_is_maintained(values):
+def test_ordering_property(values):
+    """Lesser values should be on the left, and greater on the right. This tests that."""
     tree = tree_from_values(values)._root
 
     left = tree.child("left")
@@ -403,8 +415,31 @@ def test_inserting_never_shrinks_the_tree(values, value):
         print(tree_size(tree), tree_size(new_tree))
         assert tree_size(tree) + 1 == tree_size(new_tree)
 
+@given(st.lists(st.integers(), max_size=10))
+def test_all_nodes_are_either_children_or_roots(values):
+    for tree in after_each_insert(values):
+        for node in iter(tree):
+            assert (node == tree._root) or (node.parent)
+
+
+
+tests = [
+    test_inserting_never_shrinks_the_tree,
+    test_height_is_maintained,
+    test_ordering_property,
+    test_all_nodes_are_either_children_or_roots,
+]
 
 if __name__ == "__main__":
-    test_inserting_never_shrinks_the_tree()
-    test_height_is_maintained()
-    test_ordering_property_is_maintained()
+    logging.getLogger().setLevel(logging.INFO)
+
+    for index, test in enumerate(tests):
+        if index != 0: print("")
+
+        try:
+            logging.info("running %s" % test.__name__)
+            test()
+        except Exception as e:
+            logging.exception('')
+        finally:
+            logging.info("finished running %s" % test.__name__)

@@ -1,4 +1,5 @@
 import json
+import logging
 
 from hypothesis import given
 import hypothesis.strategies as st
@@ -465,8 +466,23 @@ def test_all_nodes_are_either_children_or_roots(values):
 
 
 
+tests = [
+    test_inserting_never_shrinks_the_tree,
+    test_height_is_maintained,
+    test_ordering_property_is_maintained,
+    test_all_nodes_are_either_children_or_roots,
+]
+
 if __name__ == "__main__":
-    test_inserting_never_shrinks_the_tree()
-    test_height_is_maintained()
-    test_ordering_property_is_maintained()
-    test_all_nodes_are_either_children_or_roots()
+    logging.getLogger().setLevel(logging.INFO)
+
+    for index, test in enumerate(tests):
+        if index != 0: print("")
+
+        try:
+            logging.info("running %s" % test.__name__)
+            test()
+        except Exception as e:
+            logging.exception('')
+        finally:
+            logging.info("finished running %s" % test.__name__)

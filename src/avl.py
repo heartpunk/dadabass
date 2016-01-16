@@ -31,9 +31,13 @@ class AVLTree():
 
         try:
             self.root.insert(value)
+            self.write_log()
         except:
             self.write_log()
             raise
+
+    def __del__(self):
+        self.write_log()
 
     def write_log(self, file_name="tree_log.json"):
         """Writes a log of operation description and tree pairs in JSON for visualization."""
@@ -118,6 +122,7 @@ class AVLTreeNode():
 
         self._left = AVLTreeNode(self.container)
         self._right = AVLTreeNode(self.container)
+        self._left.parent = self._right.parent = self
         self.fix_height_metadata()
 
     @property
@@ -144,7 +149,7 @@ class AVLTreeNode():
         if not force and (self.container.root != self):
             return
 
-        self.container.log.append([operation, self.to_dict()])
+        self.container.log.append([operation, self.container.root.to_dict()])
 
     def insert(self, value):
         """Inserts the given value into the appropriate spot in the tree.
@@ -217,6 +222,11 @@ class AVLTreeNode():
     def balance(self):
         """Balances the tree if it is imbalanced."""
 
+        def values():
+            return set(node.value for node in self.container)
+
+        starting_values = values()
+
         self.update_log("before balancing")
 
         # if this assertion fails, the tree is more imbalanced than it ever should be.
@@ -230,19 +240,31 @@ class AVLTreeNode():
 
         other_side = "left" if side == "right" else "right"
 
+        # this if is suspicious...
         if side:
-            if self.child(side).child(other_side) and not self.child(side).child(side):
+            if self.child(side).child(other_side).value is not None \
+               and self.child(side).child(side).value is None:
+                assert starting_values == values()
                 self.child(side).rotate(side)
+                assert starting_values == values()
 
-            elif (self.child(side).child(other_side) and self.child(side).child(side) and
-                  # not sure why the following line matters, blindly ported from rust
+            elif (self.child(side).child(other_side).value is not None
+                  and self.child(side).child(side).value is not None and
+                  # not sure why the following line matters, blindly portedofrom rust
                   self.child(side).height(side) - self.child(side).height(other_side) < 0):
 
+                assert starting_values == values()
+                self.update_log("before rotate outside")
                 self.child(side).rotate(side)
+                self.update_log("after rotate outside", force=True)
+                assert starting_values == values()
 
+            #assert starting_values == values()
             self.rotate(other_side)
+            #assert starting_values == values()
 
         self.fix_height_metadata()
+        #assert starting_values == values()
         self.update_log("after balancing")
 
         assert self.balance_factor in (-1, 0, 1)
@@ -264,7 +286,12 @@ class AVLTreeNode():
           rotating_side: which direction to rotate the tree.
         """
 
-        force = self.container._root == self
+        def values():
+            return set(node.value for node in self.container)
+
+        starting_values = values()
+
+        force = True
         assert rotating_side in ("left", "right")
 
         self.update_log("before rotate %s" % rotating_side, force=force)
@@ -272,16 +299,34 @@ class AVLTreeNode():
         other_side = "left" if rotating_side == "right" else "right"
 
         old_parent = self.parent
+        import inspect
 
+        def lineno():
+            """Returns the current line number in our program."""
+            return inspect.currentframe().f_back.f_lineno
+
+        self.update_log("at line %s" % lineno(), force=force)
         pivot = self.child(other_side)
+        print(pivot)
+        assert pivot.value is not None
+        self.update_log("at line %s" % lineno(), force=force)
+        print(*(id(thing) for thing in (self.child(other_side), pivot, pivot.child(rotating_side))))
         self.set_child(other_side, pivot.child(rotating_side))
+        print(*(id(thing) for thing in (self.child(other_side), pivot, pivot.child(rotating_side))))
+        self.update_log("at line %s" % lineno(), force=force)
         pivot.set_child(rotating_side, self)
+        self.update_log("at line %s" % lineno(), force=force)
 
         if old_parent is None:
+            print("old_parent is None")
             self.container.root = pivot
         elif old_parent.right == self:
+            print("we're the right child")
+            self.update_log("at line %s" % lineno(), force=force)
             old_parent.set_child("right", pivot)
         elif old_parent.left == self:
+            print("we're the left child")
+            self.update_log("at line %s" % lineno(), force=force)
             old_parent.set_child("left", pivot)
         else:
             raise ValueError("we are not a child of our own used-to-be parent. wat.")
@@ -355,7 +400,7 @@ def tree_from_values(values):
     return tree
 
 
-@given(st.lists(st.integers(), max_size=100))
+@given(st.lists(st.integers(), max_size=10))
 def test_height_is_maintained(values):
     tree = tree_from_values(values)
 

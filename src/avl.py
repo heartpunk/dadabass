@@ -386,22 +386,27 @@ def after_each_insert(values):
         tree.insert(value)
         yield tree
 
+
 @given(st.lists(st.integers(), max_size=10))
 def test_height_is_maintained(values):
+    """Height metadata at each node should always correspond with the actual heights of those nodes.
+    """
+
     tree = tree_from_values(values)
 
     def height_checker(tree):
-        def height_for_side(side):
-            return height_checker(tree.child(side)) + 1
+        """Checks that the height metadata for a node is correct by recursively traversing the tree.
+        """
 
         if tree.leaf:
             assert tree.left_height == tree.right_height == 0
+
             return 0
         else:
-            assert tree.left_height == height_for_side("left")
-            assert tree.right_height == height_for_side("right")
+            assert tree.left_height == height_checker(tree.child("left")) + 1
+            assert tree.right_height == height_checker(tree.child("right")) + 1
 
-            return max(height_for_side(side) for side in ("left", "right"))
+            return max(height_checker(tree.child(side)) + 1 for side in ("left", "right"))
 
     height_checker(tree._root)
 

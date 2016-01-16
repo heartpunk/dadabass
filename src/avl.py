@@ -412,7 +412,8 @@ def test_height_is_maintained(values):
 
 
 @given(st.lists(st.integers(), max_size=10))
-def test_ordering_property_is_maintained(values):
+def test_ordering_property(values):
+    """Lesser values should be on the left, and greater on the right. This tests that."""
     tree = tree_from_values(values)._root
 
     left = tree.child("left")
@@ -453,7 +454,7 @@ def test_all_nodes_are_either_children_or_roots(values):
 tests = [
     test_inserting_never_shrinks_the_tree,
     test_height_is_maintained,
-    test_ordering_property_is_maintained,
+    test_ordering_property,
     test_all_nodes_are_either_children_or_roots,
 ]
 

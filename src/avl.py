@@ -399,6 +399,11 @@ def tree_from_values(values):
         tree.insert(value)
     return tree
 
+def after_each_insert(values):
+    tree = AVLTree()
+    for value in values:
+        tree.insert(value)
+        yield tree
 
 @given(st.lists(st.integers(), max_size=10))
 def test_height_is_maintained(values):
@@ -452,8 +457,16 @@ def test_inserting_never_shrinks_the_tree(values, value):
         print(tree_size(tree), tree_size(new_tree))
         assert tree_size(tree) + 1 == tree_size(new_tree)
 
+@given(st.lists(st.integers(), max_size=10))
+def test_all_nodes_are_either_children_or_roots(values):
+    for tree in after_each_insert(values):
+        for node in iter(tree):
+            assert (node == tree._root) or (node.parent)
+
+
 
 if __name__ == "__main__":
     test_inserting_never_shrinks_the_tree()
     test_height_is_maintained()
     test_ordering_property_is_maintained()
+    test_all_nodes_are_either_children_or_roots()

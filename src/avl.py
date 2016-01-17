@@ -30,12 +30,7 @@ class AVLTree():
           value: the value to insert into the tree
         """
 
-        try:
-            self.root.insert(value)
-            self.write_log()
-        except:
-            self.write_log()
-            raise
+        self.root.insert(value)
 
     def write_log(self, file_name="tree_log.json"):
         """Writes a log of operation description and tree pairs in JSON for visualization."""
@@ -411,7 +406,7 @@ def test_height_is_maintained(values):
     height_checker(tree._root)
 
 
-@given(st.lists(st.integers(), max_size=10))
+@given(st.lists(st.integers()))
 def test_ordering_property(values):
     """Lesser values should be on the left, and greater on the right. This tests that."""
     tree = tree_from_values(values)._root
@@ -426,7 +421,7 @@ def test_ordering_property(values):
         all(sub_tree.value > tree.value for sub_tree in right)
 
 
-@given(st.lists(st.integers(), max_size=10), st.integers())
+@given(st.lists(st.integers()), st.integers())
 def test_inserting_never_shrinks_the_tree(values, value):
     import copy
 
@@ -443,7 +438,7 @@ def test_inserting_never_shrinks_the_tree(values, value):
     else:
         assert tree_size(tree) + 1 == tree_size(new_tree)
 
-@given(st.lists(st.integers(), max_size=10))
+@given(st.lists(st.integers()))
 def test_all_nodes_are_either_children_or_roots(values):
     for tree in after_each_insert(values):
         for node in iter(tree):

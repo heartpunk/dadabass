@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Tree Explorer</title>
+
+        <style>
+         body {
+             display: flex;
+             flex-direction: row;
+         }
+
+         .node rect {
+             fill: #fff;
+             stroke: steelblue;
+             stroke-width: 1.5px;
+         }
+
+         .node text {
+             font: 10px sans-serif;
+         }
+
+         .link {
+             fill: none;
+             stroke: #ccc;
+             stroke-width: 1.5px;
+         }
+        </style>
+    </head>
+
+    <body>
+        <!-- load jquery -->
+        <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+        <!-- load the d3.js library -->
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script>
+         var margin = {top: 20, right: 120, bottom: 100, left: 120},
+             width = 1100 - margin.right - margin.left,
+             height = 800 - margin.top - margin.bottom;
+
+         // no projection because we don't transform the coordinates
+         var diagonal = d3.svg.diagonal();
+
+         var op_list = d3.select("body").append("div").append("ul")
+             .attr("class", "op_list");
+
+
+         var tree = d3.layout.tree()
+             .size([width, height]);
+
+         var tree_log = [];
+
+         d3.json("/tree_log.json", function(error, log) {
+             if (error) throw error;
+
+             tree_log = log;
+             root = log[log.length - 1][1];
+
+             update(root);
+         });
+
+         function op_click(op) {
+             console.log(op);
+             update(op[1]);
+         }
+
+         function update(source) {
+             d3.select("div svg").remove();
+
+             var svg = d3.select("body").append("div").append("svg")
+                         .attr("width", width + margin.right + margin.left)
+                         .attr("height", height + margin.top + margin.bottom)
+                         .append("g")
+                         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+             op_list.selectAll("li")
+                    .data(tree_log)
+                    .enter()
+                    .append("li")
+                    .on("mouseover", op_click)
+                    .text(function(d) {return d[0]});
+
+             var nodes = tree.nodes(source).reverse(),
+                 links = tree.links(nodes);
+
+             var node = svg.selectAll("g.node").data(nodes);
+
+             var nodeEnter = node.enter().append("g")
+                                 .attr("class", "node")
+                                 .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+             nodeEnter.append("circle")
+                 .attr("r", 5);
+
+             nodeEnter.append("text")
+                      .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
+                      .attr("dy", ".35em")
+                      .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
+                      .text(function(d) {return typeof d.value != "undefined" ? ( "value: " + d.value + ", lh: " + ( d.left_height || 0 ) + ", rh: " + ( d.right_height || 0 ) ) : ""; })
+                      .style("fill-opacity", 1);
+
+
+             var link = svg.selectAll("path.link").data(links);
+
+             link.enter()
+                 .append("path")
+                 .attr("class", "link")
+                 .attr("d", diagonal);
+         }
+        </script>
+    </body>
+</html>

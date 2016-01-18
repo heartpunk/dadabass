@@ -6,6 +6,15 @@ import hypothesis.strategies as st
 
 
 class AVLTree():
+    """The interface to an AVL tree.
+
+    The tree itself is actually represented by AVLTreeNode instances, but because of
+    needing to be able to change which node is the root, we need a container class.
+
+    Args:
+      value: an initial value to insert into the tree.
+    """
+
     def __init__(self, value=None):
         self._root = AVLTreeNode(self)
         if value is not None:
@@ -14,9 +23,17 @@ class AVLTree():
         self.log = []
 
     def insert(self, value):
+        """Inserts the vallue into the tree.
+
+        Args:
+          value: the value to insert into the tree
+        """
+
         self.root.insert(value)
 
     def write_log(self, file_name="tree_log.json"):
+        """Writes a log of operation description and tree pairs in JSON for visualization."""
+
         with open(file_name, "w") as f:
             f.write(json.dumps(self.log))
 
@@ -33,6 +50,8 @@ class AVLTree():
         self._root.parent = None
 
     def to_dict(self):
+        """Returns a dictionary representation of this tree."""
+
         return self._root.to_dict()
 
     def __iter__(self):
@@ -58,6 +77,7 @@ class AVLTreeNode():
 
     def __str__(self, depth=0):
         def helper(child):
+            """Simplifies printing children."""
             return "\n" + (child.__str__(depth + 1)
                            if child is not None
                            else "  " * (depth + 1) + "None")
@@ -78,22 +98,43 @@ class AVLTreeNode():
 
     @property
     def max_height(self) -> int:
+        """Returns the height of the maximal depth subtree."""
+
         return max(self.left_height, self.right_height)
 
     @property
-    def leaf(self):
+    def leaf(self) -> bool:
+        """Returns whether this node is a leaf or not."""
+
         return self.left is None and self.right is None
 
     def become_branch(self):
+        """Converts this node from a leaf to a branch."""
+
         self._left = AVLTreeNode(self.container)
         self._right = AVLTreeNode(self.container)
         self.fix_height_metadata()
 
     @property
     def balance_factor(self) -> int:
+        """This represents how, and in which direction, this node is imbalanced."""
+
         return self.left_height - self.right_height
 
     def update_log(self, operation, force=False):
+        """Updates the log of operation and tree pairs for later visualization.
+
+        The log is only ever updated at the root, to avoid visualizing multiple layers
+        in one stream, which would be very confusing.
+
+        Args:
+          operation: A textual description of the operation taking place, intended
+            for human consumption.
+          force: Defaults to false. If this is true, we will append to the log regardless
+            of whether or not we are the root. This is used during operations where the
+            root has just changed, but the whole tree should still be visualized.
+        """
+
         # if we aren't the root, don't log
         if not force and (self.container.root != self):
             return
@@ -101,6 +142,12 @@ class AVLTreeNode():
         self.container.log.append([operation, self.container.root.to_dict()])
 
     def insert(self, value):
+        """Inserts the given value into the appropriate spot in the tree.
+
+        Args:
+          value: the value to insert.
+        """
+
         force = self.container._root == self
 
         def post_insert():
@@ -127,12 +174,24 @@ class AVLTreeNode():
 
     # this could be __getitem__ (same for set_child and __setitem__)
     def child(self, side):
+        """Returns the child on side (where side is "right" or "left").
+
+        Args:
+          side: One of "right" or "left". The side of the child we want to fetch."""
+
         assert side in ("left", "right")
         return getattr(self, "_" + side)
 
-    def set_child(self, side, value):
+    def set_child(self, side, new_node):
+        """Sets the child on side (where side is "right" or "left").
+
+        Args:
+          side: One of "right" or "left". The side of the child we want to set.
+          new_node: The node to set the child on side to.
+        """
+
         assert side in ("left", "right")
-        setattr(self, "_%s" % side, value)
+        setattr(self, "_%s" % side, new_node)
         child = self.child(side)
         child.parent = self
         setattr(self, "%s_height" % side, child.max_height + 1 if child else 0)
@@ -141,10 +200,18 @@ class AVLTreeNode():
             self.parent.fix_height_metadata()
 
     def height(self, side):
+        """Returns the height of the child on side.
+
+        Args:
+          side: Which side the child we want the height of.
+        """
+
         assert side in ("left", "right")
         return getattr(self, "%s_height" % side)
 
     def balance(self):
+        """Balances the tree if it is imbalanced."""
+
         self.update_log("before balancing")
 
         # if this assertion fails, the tree is more imbalanced than it ever should be.
@@ -177,10 +244,22 @@ class AVLTreeNode():
         assert self.balance_factor in (-1, 0, 1)
 
     def fix_height_metadata(self):
+        """Locally adjust the height metadata based on the height metadata of our children.
+
+        It is crucial that this code only be called when the children have sane height
+        metadata. If not, the whole tree will almost certainly break.
+        """
+
         self.left_height = self.left.max_height + 1
         self.right_height = self.right.max_height + 1
 
     def rotate(self, rotating_side):
+        """Rotate the tree around this node, to the direction specified by rotating_side.
+
+        Args:
+          rotating_side: which direction to rotate the tree.
+        """
+
         force = True
         assert(rotating_side in ("left", "right"))
 
@@ -209,8 +288,13 @@ class AVLTreeNode():
         self.update_log("after rotate %s" % rotating_side, force=force)
 
     def to_dict(self):
+        """Returns a representation of this node as a dict."""
+
         def or_dict(node):
+            """Helper function that returns the dict-ified child, or an empty dict."""
+
             return node.to_dict() if node and node.value is not None else {}
+
         return {
             "children": [or_dict(self.left), or_dict(self.right)],
             "left_height": self.left_height,
@@ -223,6 +307,8 @@ class AVLTreeNode():
 
 
 class AVLTreeIterator():
+    """Simple depth first iterator for AVLTree."""
+
     def __init__(self, root):
         self.to_visit = []
         self.current = root

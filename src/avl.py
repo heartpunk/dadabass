@@ -226,19 +226,18 @@ class AVLTreeNode():
         other_side = "left" if side == "right" else "right"
 
         if side:
-            if (self.child(side).child(other_side) and not self.child(side).child(side)):
-               self.child(side).rotate(side)
+            if self.child(side).child(other_side) and not self.child(side).child(side):
+                self.child(side).rotate(side)
 
-            elif (self.child(side).child(other_side) and self.child(side).child(side) and \
-                # not sure why the following line matters, blindly ported from rust
-                self.child(side).height(side) - self.child(side).height(other_side) < 0):
+            elif (self.child(side).child(other_side) and self.child(side).child(side) and
+                  # not sure why the following line matters, blindly ported from rust
+                  self.child(side).height(side) - self.child(side).height(other_side) < 0):
 
-               self.child(side).rotate(side)
+                self.child(side).rotate(side)
 
             self.rotate(other_side)
 
         self.fix_height_metadata()
-
         self.update_log("after balancing")
 
         assert self.balance_factor in (-1, 0, 1)

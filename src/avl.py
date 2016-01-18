@@ -113,6 +113,7 @@ class AVLTreeNode():
 
         self._left = AVLTreeNode(self.container)
         self._right = AVLTreeNode(self.container)
+        self._left.parent = self._right.parent = self
         self.fix_height_metadata()
 
     @property
